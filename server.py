@@ -1,0 +1,141 @@
+from fastapi import FastAPI, APIRouter
+from fastapi.responses import FileResponse
+from fastapi.middleware.cors import CORSMiddleware
+from pathlib import Path
+import logging
+import yfinance as yf
+
+ROOT_DIR = Path(__file__).parent
+FRONTEND_DIR = ROOT_DIR.parent / "frontend" / "public"
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger("stock-app")
+
+app = FastAPI(title="Stock Watchlist Backend")
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+api_router = APIRouter(prefix="/api")
+
+@app.get("/", include_in_schema=False)
+async def serve_frontend():
+    return FileResponse(FRONTEND_DIR / "index.html")
+
+@api_router.get("/")
+async def api_root():
+    return {"message": "Stock Watchlist API is running"}
+
+@api_router.get("/yahoo/quote/{ticker}")
+async def get_yahoo_quote(ticker: str):
+    ticker = ticker.strip().upper()
+    if not ticker:
+        return {"error": "Ticker is required"}
+
+    if not ticker.endswith(".NS"):
+        ticker = f"{ticker}.NS"
+
+    try:
+        stock = yf.Ticker(ticker)
+        info = stock.info or {}
+
+        result = {
+            "quoteSummary": {
+                "result": [{
+                    "assetProfile": {
+                        "longName": info.get("longName", ticker)
+                    },
+                    "summaryDetail": {
+                        "previousClose": {"raw": info.get("previousClose", 0)},
+                        "fiftyTwoWeekHigh": {"raw": info.get("fiftyTwoWeekHigh", 0)},
+                        "fiftyTwoWeekLow": {"raw": info.get("fiftyTwoWeekLow", 0)},
+                        "marketCap": {"raw": info.get("marketCap", 0)},
+                        "trailingPE": {"raw": info.get("trailingPE")},
+                        "dividendYield": {"raw": info.get("dividendYield")}
+                    },
+                    "financialData": {
+                        "currentPrice": {"raw": info.get("currentPrice", info.get("regularMarketPrice", 0))},
+                        "debtToEquity": {"raw": info.get("debtToEquity")},
+                        "returnOnEquity": {"raw": info.get("returnOnEquity")},
+                        "totalRevenue": {"raw": info.get("totalRevenue")},
+                        "operatingMargins": {"raw": info.get("operatingMargins")},
+                        "profitMargins": {"raw": info.get("profitMargins")},
+                        "revenueGrowth": {"raw": info.get("revenueGrowth")}
+                    },
+                    "defaultKeyStatistics": {
+                        "trailingEps": {"raw": info.get("trailingEps")},
+                        "priceToBook": {"raw": info.get("priceToBook")},
+                        "bookValue": {"raw": info.get("bookValue")},
+                        "heldPercentInsiders": {"raw": info.get("heldPercentInsiders")},
+                        "heldPercentInstitutions": {"raw": info.get("heldPercentInstitutions")}
+                    }
+                }]
+            }
+        }
+        return result
+    except Exception as exc:
+        logger.error(f"Error fetching quote for {ticker}: %s", exc)
+        return {"error": str(exc)}
+
+@api_router.get("/yahoo/chart/{ticker}")
+async def get_yahoo_chart(ticker: str):
+    ticker = ticker.strip().upper()
+    if not ticker.endswith(".NS"):
+        ticker = f"{ticker}.NS"
+
+    try:
+        stock = yf.Ticker(ticker)
+        info = stock.info or {}
+
+        return {
+            "chart": {
+                "result": [{
+                    "meta": {
+                        "regularMarketPrice": info.get("currentPrice", info.get("regularMarketPrice", 0)),
+                        "previousClose": info.get("previousClose", 0)
+                    }
+                }]
+            }
+        }
+    except Exception as exc:
+        logger.error(f"Error fetching chart for {ticker}: %s", exc)
+        return {"error": str(exc)}
+
+@api_router.get("/yahoo/search")
+async def search_yahoo_stocks(q: str):
+    query = q.strip().upper()
+    if not query:
+        return {"quotes": []}
+
+    try:
+        if not query.endswith(".NS"):
+            query = f"{query}.NS"
+
+        stock = yf.Ticker(query)
+        info = stock.info or {}
+
+        if info and info.get("longName"):
+            return {
+                "quotes": [{
+                    "symbol": query,
+                    "exchange": "NSI",
+                    "quoteType": "EQUITY",
+                    "longname": info.get("longName", ""),
+                    "shortname": info.get("shortName", "")
+                }]
+            }
+
+        return {"quotes": []}
+    except Exception as exc:
+        logger.error(f"Error searching Yahoo for {q}: %s", exc)
+        return {"error": str(exc)}
+
+app.include_router(api_router)
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000)
