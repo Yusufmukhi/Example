@@ -47,7 +47,12 @@ async def get_yahoo_quote(ticker: str):
             "quoteSummary": {
                 "result": [{
                     "assetProfile": {
-                        "longName": info.get("longName", ticker)
+                        "longName":  info.get("longName", ticker),
+                        "sector":    info.get("sector", ""),
+                        "industry":  info.get("industry", ""),
+                        "website":   info.get("website", ""),
+                        "country":   info.get("country", ""),
+                        "employees": info.get("fullTimeEmployees")
                     },
                     "summaryDetail": {
                         "previousClose": {"raw": info.get("previousClose", 0)},
