@@ -138,7 +138,76 @@ async def search_yahoo_stocks(q: str):
     except Exception as exc:
         logger.error(f"Error searching Yahoo for {q}: %s", exc)
         return {"error": str(exc)}
+"""
+server_addition.py
+──────────────────
+Add this route to your existing server.py.
 
+Paste it BEFORE the line:
+    app.include_router(api_router)
+
+This adds:
+  GET /api/yahoo/history/{ticker}?period=2y
+  
+Which powers the live NIFTY 50 / SENSEX benchmark lines
+in the Analytics tab.
+
+Examples:
+  /api/yahoo/history/%5ENSEI?period=2y    →  NIFTY 50
+  /api/yahoo/history/%5EBSESN?period=2y   →  SENSEX
+  /api/yahoo/history/RELIANCE?period=1y   →  NSE stock
+"""
+
+import urllib.parse
+from typing import Optional
+
+
+@api_router.get("/yahoo/history/{ticker}")
+async def get_yahoo_history(ticker: str, period: str = "2y"):
+    """
+    Returns daily closing price history for any ticker.
+    - Index tickers like ^NSEI, ^BSESN must be URL-encoded as %5ENSEI etc.
+    - NSE stocks like RELIANCE are auto-suffixed with .NS
+    
+    Response: {"history": [{"date": "YYYY-MM-DD", "close": 12345.67}, ...]}
+    """
+    raw = urllib.parse.unquote(ticker).strip().upper()
+
+    # Indices start with ^ — don't append .NS
+    if raw.startswith("^"):
+        symbol = raw
+    elif raw.endswith(".NS"):
+        symbol = raw
+    else:
+        symbol = f"{raw}.NS"
+
+    # Validate period to prevent injection
+    allowed_periods = {"1d", "5d", "1mo", "3mo", "6mo", "1y", "2y", "5y", "10y", "ytd", "max"}
+    if period not in allowed_periods:
+        period = "2y"
+
+    try:
+        stock = yf.Ticker(symbol)
+        hist  = stock.history(period=period)
+
+        if hist.empty:
+            logger.warning(f"No history returned for {symbol}")
+            return {"history": [], "symbol": symbol}
+
+        data = [
+            {
+                "date":  str(idx.date()),
+                "close": round(float(row["Close"]), 2)
+            }
+            for idx, row in hist.iterrows()
+        ]
+
+        logger.info(f"History for {symbol}: {len(data)} rows")
+        return {"history": data, "symbol": symbol}
+
+    except Exception as exc:
+        logger.error(f"Error fetching history for {symbol}: {exc}")
+        return {"error": str(exc), "symbol": symbol}
 app.include_router(api_router)
 
 if __name__ == "__main__":
