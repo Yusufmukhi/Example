@@ -217,6 +217,9 @@ tbody tr:hover { background: var(--btn-bg); }
 .analytics-empty h4 { font-family: 'Syne', sans-serif; color: var(--text); font-size: 1rem; margin: 0; }
 .analytics-empty p { font-size: 0.85rem; max-width: 300px; margin: 0; }
 
+/* Days held badge */
+.days-badge { display: inline-block; padding: 2px 7px; border-radius: 4px; font-size: 0.78rem; font-weight: 600; background: rgba(88,166,255,0.1); color: var(--accent); font-family: 'JetBrains Mono', monospace; }
+
 @media (max-width: 900px) { .analytics-grid { grid-template-columns: 1fr; } }
 @media (max-width: 768px) {
   .stock-grid { grid-template-columns: 1fr; }
@@ -239,8 +242,14 @@ tbody tr:hover { background: var(--btn-bg); }
   <div class="tabs">
     <button class="tab active" data-tab="watchlist"    onclick="switchTab('watchlist')">Watchlist</button>
     <button class="tab"        data-tab="portfolio"    onclick="switchTab('portfolio')">Portfolio</button>
+    <button class="tab"        data-tab="sold"         onclick="switchTab('sold')">📋 Sold Stocks</button>
     <button class="tab"        data-tab="transactions" onclick="switchTab('transactions')">Transactions</button>
     <button class="tab"        data-tab="analytics"    onclick="switchTab('analytics')">📈 Analytics</button>
+    <button class="tab"        data-tab="research"     onclick="switchTab('research')">🔬 Research</button>
+    <button class="tab"        data-tab="sip"          onclick="switchTab('sip')">🔄 SIP</button>
+    <button class="tab"        data-tab="goals"        onclick="switchTab('goals')">🎯 Goals</button>
+    <button class="tab"        data-tab="dividends"    onclick="switchTab('dividends')">💸 Dividends</button>
+    <button class="tab"        data-tab="tax"          onclick="switchTab('tax')">🧾 Tax Report</button>
     <button class="tab"        data-tab="settings"     onclick="switchTab('settings')">Settings</button>
   </div>
 
@@ -278,7 +287,7 @@ tbody tr:hover { background: var(--btn-bg); }
       </div>
     </div>
     <div class="portfolio-actions">
-      <button class="btn"           onclick="showAddFundsModal()">💰 Add Funds</button>
+      <button class="btn"               onclick="showAddFundsModal()">💰 Add Funds</button>
       <button class="btn btn-secondary" onclick="showWithdrawModal()">🏧 Withdraw</button>
       <button class="btn btn-success"   onclick="showBuyStockModal()">📈 Buy Stock</button>
       <button class="btn btn-secondary" onclick="showSellStockModal()">📉 Sell Stock</button>
@@ -287,9 +296,17 @@ tbody tr:hover { background: var(--btn-bg); }
     </div>
     <div class="filter-bar">
       <span class="filter-label">Sort by:</span>
-      <select id="portfolioSortBy" onchange="updateHoldingsTable()"><option value="weight">Weight %</option><option value="value">Market Value</option><option value="pl">P&amp;L ₹</option><option value="plpct">P&amp;L %</option><option value="realized">Realized P&amp;L</option><option value="qty">Quantity</option><option value="sector">Sector</option></select>
+      <select id="portfolioSortBy" onchange="updateHoldingsTable()">
+        <option value="weight">Weight %</option><option value="value">Market Value</option>
+        <option value="pl">P&amp;L ₹</option><option value="plpct">P&amp;L %</option>
+        <option value="realized">Realized P&amp;L</option><option value="qty">Quantity</option>
+        <option value="sector">Sector</option><option value="days">Days Held</option>
+      </select>
       <span class="filter-label">Filter:</span>
-      <select id="portfolioFilter" onchange="updateHoldingsTable()"><option value="all">All Holdings</option><option value="profit">Profits Only</option><option value="loss">Losses Only</option><option value="sector">By Sector</option></select>
+      <select id="portfolioFilter" onchange="updateHoldingsTable()">
+        <option value="all">All Holdings</option><option value="profit">Profits Only</option>
+        <option value="loss">Losses Only</option><option value="sector">By Sector</option>
+      </select>
       <select id="sectorFilter" onchange="updateHoldingsTable()" style="display:none;"><option value="">All Sectors</option></select>
       <span class="filter-label">Search:</span>
       <input type="text" id="portfolioSearch" placeholder="Ticker..." style="width:120px;" oninput="updateHoldingsTable()">
@@ -298,20 +315,59 @@ tbody tr:hover { background: var(--btn-bg); }
       <table>
         <thead>
           <tr>
-            <th onclick="sortHoldings('stock')">Stock ↕</th><th>Company</th><th>Sector</th>
-            <th onclick="sortHoldings('qty')">Qty ↕</th><th onclick="sortHoldings('avgPrice')">Avg Price ↕</th>
-            <th onclick="sortHoldings('cmp')">CMP ↕</th><th onclick="sortHoldings('invested')">Invested ↕</th>
-            <th onclick="sortHoldings('value')">Mkt Value ↕</th><th onclick="sortHoldings('pl')">P&amp;L (₹) ↕</th>
-            <th onclick="sortHoldings('plpct')">P&amp;L % ↕</th><th onclick="sortHoldings('realized')">Realized ↕</th>
-            <th onclick="sortHoldings('weight')">Weight ↕</th><th>Weight Bar</th><th>Action</th>
+            <th onclick="sortHoldings('stock')">Stock ↕</th>
+            <th>Company</th>
+            <th>Sector</th>
+            <th onclick="sortHoldings('qty')">Qty ↕</th>
+            <th onclick="sortHoldings('avgPrice')">Avg Price ↕</th>
+            <th>Buy Date</th>
+            <th onclick="sortHoldings('cmp')">CMP ↕</th>
+            <th onclick="sortHoldings('invested')">Invested ↕</th>
+            <th onclick="sortHoldings('value')">Mkt Value ↕</th>
+            <th onclick="sortHoldings('pl')">P&amp;L (₹) ↕</th>
+            <th onclick="sortHoldings('plpct')">P&amp;L % ↕</th>
+            <th onclick="sortHoldings('days')">Days Held ↕</th>
+            <th onclick="sortHoldings('realized')">Realized ↕</th>
+            <th onclick="sortHoldings('weight')">Weight ↕</th>
+            <th>Weight Bar</th>
+            <th>Action</th>
           </tr>
         </thead>
-        <tbody id="holdingsTable"><tr><td colspan="14" class="empty-state"><h3>No Holdings</h3><p>Add funds and buy stocks to start tracking your portfolio</p></td></tr></tbody>
+        <tbody id="holdingsTable">
+          <tr><td colspan="16" class="empty-state"><h3>No Holdings</h3><p>Add funds and buy stocks to start tracking your portfolio</p></td></tr>
+        </tbody>
       </table>
     </div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;">
       <div><h3 style="font-family:'Syne',sans-serif;margin-bottom:12px;">Portfolio Allocation</h3><div class="chart-container" style="max-width:100%;"><canvas id="portfolioChart"></canvas></div></div>
       <div><h3 style="font-family:'Syne',sans-serif;margin-bottom:12px;">Sector Allocation</h3><div id="sectorChartContainer" style="max-width:100%;"><canvas id="sectorChart"></canvas></div></div>
+    </div>
+  </div>
+
+  <!-- ===== SOLD STOCKS TAB ===== -->
+  <div id="sold-tab" class="tab-content">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;gap:12px;flex-wrap:wrap;">
+      <h2>Sold Stocks History</h2>
+      <button class="btn btn-secondary" onclick="exportSoldCSV()">📥 Export CSV</button>
+    </div>
+    <div class="analytics-stat-row">
+      <div class="analytics-stat success"><div class="analytics-stat-label">Total Realized Profit</div><div class="analytics-stat-value" id="sold-total-profit">₹0</div></div>
+      <div class="analytics-stat"><div class="analytics-stat-label">Stocks Sold</div><div class="analytics-stat-value" id="sold-count">0</div></div>
+      <div class="analytics-stat warn"><div class="analytics-stat-label">STCG Gains</div><div class="analytics-stat-value" id="sold-stcg">₹0</div></div>
+      <div class="analytics-stat neutral"><div class="analytics-stat-label">LTCG Gains</div><div class="analytics-stat-value" id="sold-ltcg">₹0</div></div>
+    </div>
+    <div class="table-container">
+      <table>
+        <thead><tr>
+          <th>Stock</th><th>Company</th><th>Sell Date</th><th>Buy Date</th>
+          <th>Qty</th><th>Avg Buy Price</th><th>Sell Price</th>
+          <th>Invested</th><th>Proceeds</th><th>P&amp;L (₹)</th><th>P&amp;L %</th>
+          <th>Days Held</th><th>Tax Type</th>
+        </tr></thead>
+        <tbody id="soldTable">
+          <tr><td colspan="13" class="empty-state"><h3>No Sold Stocks</h3><p>Sell a stock to track your realized gains here.</p></td></tr>
+        </tbody>
+      </table>
     </div>
   </div>
 
@@ -341,17 +397,19 @@ tbody tr:hover { background: var(--btn-bg); }
           <tr>
             <th>Date</th><th>Action</th><th>Stock</th><th>Company</th><th>Sector</th>
             <th>Qty</th><th>Price (₹)</th><th>Amount (₹)</th><th>Cash Balance</th>
-            <th>Avg Cost</th><th>Profit / Loss (₹)</th><th>P/L %</th><th>Holding Days</th><th>Type</th>
+            <th>Avg Cost</th><th>Profit / Loss (₹)</th><th>P/L %</th>
+            <th>Holding Days</th><th>Tax Type</th>
           </tr>
         </thead>
-        <tbody id="transactionsTable"><tr><td colspan="14" class="empty-state"><h3>No Transactions</h3><p>Your transaction history will appear here</p></td></tr></tbody>
+        <tbody id="transactionsTable">
+          <tr><td colspan="14" class="empty-state"><h3>No Transactions</h3><p>Your transaction history will appear here</p></td></tr>
+        </tbody>
       </table>
     </div>
   </div>
 
   <!-- ===== ANALYTICS TAB ===== -->
   <div id="analytics-tab" class="tab-content">
-
     <div class="analytics-stat-row">
       <div class="analytics-stat success" id="kpi-card-xirr">
         <div class="analytics-stat-label">XIRR (Annualised)</div>
@@ -400,7 +458,7 @@ tbody tr:hover { background: var(--btn-bg); }
         <button class="period-btn" onclick="setPerfPeriod('ALL',this)">ALL</button>
       </div>
       <div style="position:relative;width:100%;height:320px;" id="perfChartWrap">
-        <canvas id="perfChart" role="img" aria-label="Portfolio value over time compared to NIFTY 50 and SENSEX">Portfolio performance chart</canvas>
+        <canvas id="perfChart"></canvas>
       </div>
       <div style="display:flex;gap:20px;margin-top:10px;flex-wrap:wrap;">
         <span style="display:flex;align-items:center;gap:6px;font-size:0.8rem;color:var(--text-muted);"><span style="width:20px;height:2.5px;background:#58a6ff;display:inline-block;border-radius:2px;"></span> My Portfolio</span>
@@ -414,7 +472,7 @@ tbody tr:hover { background: var(--btn-bg); }
       <div class="analytics-card">
         <h3>📉 Drawdown Tracker</h3>
         <div style="position:relative;width:100%;height:190px;" id="drawdownChartWrap">
-          <canvas id="drawdownChart" role="img" aria-label="Portfolio drawdown from peak">Drawdown chart</canvas>
+          <canvas id="drawdownChart"></canvas>
         </div>
         <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border);">
           <div style="display:flex;justify-content:space-between;font-size:0.82rem;margin-bottom:5px;">
@@ -436,8 +494,8 @@ tbody tr:hover { background: var(--btn-bg); }
         <p style="font-size:0.82rem;color:var(--text-muted);margin-bottom:14px;">Computed from your actual buy transactions and current market prices.</p>
         <div style="overflow-x:auto;">
           <table class="xirr-table">
-            <thead><tr><th>Stock</th><th>Invested</th><th>Current</th><th>XIRR</th><th>CAGR</th><th>Days</th></tr></thead>
-            <tbody id="xirrTable"><tr><td colspan="6" style="text-align:center;padding:20px;color:var(--text-muted);">Buy stocks to see XIRR &amp; CAGR</td></tr></tbody>
+            <thead><tr><th>Stock</th><th>Buy Date</th><th>Invested</th><th>Current</th><th>XIRR</th><th>CAGR</th><th>Days</th></tr></thead>
+            <tbody id="xirrTable"><tr><td colspan="7" style="text-align:center;padding:20px;color:var(--text-muted);">Buy stocks to see XIRR &amp; CAGR</td></tr></tbody>
           </table>
         </div>
         <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border);">
@@ -467,7 +525,101 @@ tbody tr:hover { background: var(--btn-bg); }
       </div>
       <div style="font-size:0.75rem;color:var(--text-muted);margin-top:10px;">* Portfolio returns from local daily snapshots. NIFTY 50 &amp; SENSEX show typical historical averages.</div>
     </div>
+  </div>
 
+  <!-- ===== RESEARCH TAB ===== -->
+  <div id="research-tab" class="tab-content">
+    <h2 style="margin-bottom:20px;">🔬 Research & Analysis</h2>
+    <div class="filter-bar" style="margin-bottom:20px;">
+      <span class="filter-label">Select Stock:</span>
+      <select id="researchStockPicker" onchange="loadResearch(this.value)" style="padding:8px 14px;border:1px solid var(--border);border-radius:6px;background:var(--bg-card);color:var(--text);font-size:0.9rem;">
+        <option value="">-- Pick a stock --</option>
+      </select>
+      <button class="btn" onclick="loadResearch(document.getElementById('researchStockPicker').value)">🔄 Refresh</button>
+    </div>
+    <div id="researchContent">
+      <div class="empty-state"><h3>Select a stock above</h3><p>Technical indicators, analyst targets, news and peer comparison will load here.</p></div>
+    </div>
+  </div>
+
+  <!-- ===== SIP TRACKER TAB ===== -->
+  <div id="sip-tab" class="tab-content">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:12px;">
+      <h2>🔄 SIP Tracker</h2>
+      <button class="btn btn-success" onclick="showAddSIPModal()">+ Add SIP</button>
+    </div>
+    <div class="analytics-stat-row">
+      <div class="analytics-stat success"><div class="analytics-stat-label">Total SIP Invested</div><div class="analytics-stat-value" id="sip-total-invested">₹0</div></div>
+      <div class="analytics-stat"><div class="analytics-stat-label">Active SIPs</div><div class="analytics-stat-value" id="sip-active-count">0</div></div>
+      <div class="analytics-stat warn"><div class="analytics-stat-label">Monthly Outflow</div><div class="analytics-stat-value" id="sip-monthly">₹0</div></div>
+    </div>
+    <div class="table-container">
+      <table>
+        <thead><tr><th>Stock</th><th>Frequency</th><th>Amount</th><th>Start Date</th><th>Installments</th><th>Total Invested</th><th>Current Value</th><th>P&amp;L</th><th>Actions</th></tr></thead>
+        <tbody id="sipTable"><tr><td colspan="9" class="empty-state"><h3>No SIPs set up</h3><p>Add a recurring SIP to track your regular investments.</p></td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ===== GOALS TAB ===== -->
+  <div id="goals-tab" class="tab-content">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:12px;">
+      <h2>🎯 Goal-Based Investing</h2>
+      <button class="btn btn-success" onclick="showAddGoalModal()">+ Add Goal</button>
+    </div>
+    <div id="goalsContainer">
+      <div class="empty-state"><h3>No Goals Set</h3><p>Set a financial goal (e.g. ₹10L by 2027) and track your progress.</p></div>
+    </div>
+  </div>
+
+  <!-- ===== DIVIDENDS TAB ===== -->
+  <div id="dividends-tab" class="tab-content">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:12px;">
+      <h2>💸 Dividend Tracker</h2>
+      <button class="btn btn-success" onclick="showAddDividendModal()">+ Log Dividend</button>
+    </div>
+    <div class="analytics-stat-row">
+      <div class="analytics-stat success"><div class="analytics-stat-label">Total Dividends</div><div class="analytics-stat-value" id="div-total">₹0</div></div>
+      <div class="analytics-stat"><div class="analytics-stat-label">This Year</div><div class="analytics-stat-value" id="div-this-year">₹0</div></div>
+      <div class="analytics-stat warn"><div class="analytics-stat-label">Last Year</div><div class="analytics-stat-value" id="div-last-year">₹0</div></div>
+    </div>
+    <div class="table-container">
+      <table>
+        <thead><tr><th>Date</th><th>Stock</th><th>Company</th><th>Shares</th><th>Per Share (₹)</th><th>Total (₹)</th><th>Actions</th></tr></thead>
+        <tbody id="dividendTable"><tr><td colspan="7" class="empty-state"><h3>No Dividends Logged</h3><p>Log dividend payouts to track your passive income.</p></td></tr></tbody>
+      </table>
+    </div>
+    <div style="margin-top:24px;" id="divByYearSection"></div>
+  </div>
+
+  <!-- ===== TAX REPORT TAB ===== -->
+  <div id="tax-tab" class="tab-content">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:12px;">
+      <h2>🧾 Tax Report</h2>
+      <div style="display:flex;gap:8px;">
+        <select id="taxYear" onchange="renderTaxReport()" style="padding:8px 14px;border:1px solid var(--border);border-radius:6px;background:var(--bg-card);color:var(--text);">
+          <option value="all">All Years</option>
+        </select>
+        <button class="btn btn-secondary" onclick="exportTaxCSV()">📥 Export CSV</button>
+      </div>
+    </div>
+    <!-- Tax summary -->
+    <div class="analytics-stat-row">
+      <div class="analytics-stat danger"><div class="analytics-stat-label">STCG (&lt;1 yr) Gains</div><div class="analytics-stat-value" id="tax-stcg-gain">₹0</div><div class="analytics-stat-sub">Tax @ 20% (post Jul'24)</div></div>
+      <div class="analytics-stat warn"><div class="analytics-stat-label">LTCG (&gt;1 yr) Gains</div><div class="analytics-stat-value" id="tax-ltcg-gain">₹0</div><div class="analytics-stat-sub">Exempt up to ₹1.25L, then 12.5%</div></div>
+      <div class="analytics-stat"><div class="analytics-stat-label">STCG Tax Liability</div><div class="analytics-stat-value" id="tax-stcg-tax">₹0</div></div>
+      <div class="analytics-stat"><div class="analytics-stat-label">LTCG Tax Liability</div><div class="analytics-stat-value" id="tax-ltcg-tax">₹0</div></div>
+      <div class="analytics-stat danger"><div class="analytics-stat-label">Total Est. Tax</div><div class="analytics-stat-value" id="tax-total">₹0</div></div>
+    </div>
+    <div class="analytics-info-box" style="margin-bottom:20px;">
+      <strong>Indian Tax Rules (Post Budget 2024):</strong> STCG on listed equities = <strong>20%</strong> (was 15%). LTCG on listed equities = <strong>12.5%</strong> on gains exceeding ₹1,25,000/year (was 10% above ₹1L). Holding period &lt;12 months = STCG. These are estimates; consult a CA for filing.
+    </div>
+    <div class="table-container">
+      <table>
+        <thead><tr><th>Sell Date</th><th>Stock</th><th>Qty</th><th>Buy Price</th><th>Sell Price</th><th>Gain/Loss</th><th>Days Held</th><th>Type</th><th>Est. Tax</th></tr></thead>
+        <tbody id="taxTable"><tr><td colspan="9" class="empty-state"><h3>No Sell Transactions</h3><p>Tax report generates from your sell history.</p></td></tr></tbody>
+      </table>
+    </div>
   </div>
 
   <!-- ===== SETTINGS TAB ===== -->
@@ -495,7 +647,7 @@ tbody tr:hover { background: var(--btn-bg); }
   </div>
 </div>
 
-<!-- MODALS -->
+<!-- ===================== MODALS ===================== -->
 <div class="modal" id="addFundsModal">
   <div class="modal-content">
     <div class="modal-header"><h3 class="modal-title">Add Funds</h3><button class="close-btn" onclick="closeModal('addFundsModal')">&times;</button></div>
@@ -512,26 +664,107 @@ tbody tr:hover { background: var(--btn-bg); }
   </div>
 </div>
 
+<!-- ===== BUY MODAL — now with Buy Date ===== -->
 <div class="modal" id="buyStockModal">
   <div class="modal-content">
     <div class="modal-header"><h3 class="modal-title">Buy Stock</h3><button class="close-btn" onclick="closeModal('buyStockModal')">&times;</button></div>
-    <div class="form-group"><label class="form-label">Stock Ticker</label><input type="text" class="form-input" id="buyTicker" placeholder="RELIANCE" style="text-transform:uppercase;" oninput="fetchBuyPrice(this.value)"></div>
-    <div class="form-group"><label class="form-label">Buy Price</label><input type="number" class="form-input" id="buyPrice" placeholder="Enter price or fetch from ticker" step="0.01" min="0" oninput="onBuyPriceInput()"></div>
-    <div class="form-group"><label class="form-label">Quantity</label><input type="number" class="form-input" id="buyQty" placeholder="10" min="1" oninput="updateBuyTotal()"></div>
-    <div class="form-group"><label class="form-label">Total Amount</label><input type="text" class="form-input" id="buyTotal" readonly placeholder="₹0"></div>
-    <div class="modal-actions"><button class="btn btn-secondary" onclick="closeModal('buyStockModal')">Cancel</button><button class="btn btn-success" onclick="buyStock()">Buy</button></div>
+    <div class="form-group">
+      <label class="form-label">Stock Ticker</label>
+      <input type="text" class="form-input" id="buyTicker" placeholder="RELIANCE" style="text-transform:uppercase;" oninput="fetchBuyPrice(this.value)">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Buy Date</label>
+      <input type="date" class="form-input" id="buyDate">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Buy Price (₹)</label>
+      <input type="number" class="form-input" id="buyPrice" placeholder="Enter price or fetched from ticker" step="0.01" min="0" oninput="onBuyPriceInput()">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Quantity</label>
+      <input type="number" class="form-input" id="buyQty" placeholder="10" min="1" oninput="updateBuyTotal()">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Total Amount</label>
+      <input type="text" class="form-input" id="buyTotal" readonly placeholder="₹0">
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal('buyStockModal')">Cancel</button>
+      <button class="btn btn-success" onclick="buyStock()">Buy</button>
+    </div>
   </div>
 </div>
 
+<!-- ===== SELL MODAL — now with Sell Date ===== -->
 <div class="modal" id="sellStockModal">
   <div class="modal-content">
     <div class="modal-header"><h3 class="modal-title">Sell Stock</h3><button class="close-btn" onclick="closeModal('sellStockModal')">&times;</button></div>
-    <div class="form-group"><label class="form-label">Select Stock</label><select class="form-input" id="sellStockSelect" onchange="updateSellDetails()"><option value="">-- Select Stock --</option></select></div>
-    <div class="form-group"><label class="form-label">Available Quantity</label><input type="text" class="form-input" id="sellAvailable" readonly></div>
-    <div class="form-group"><label class="form-label">Sell Price</label><input type="number" class="form-input" id="sellPrice" placeholder="Enter sell price" step="0.01" min="0" oninput="updateSellTotal()"></div>
-    <div class="form-group"><label class="form-label">Quantity to Sell</label><input type="number" class="form-input" id="sellQty" placeholder="0" min="1" oninput="updateSellTotal()"></div>
-    <div class="form-group"><label class="form-label">Total Amount</label><input type="text" class="form-input" id="sellTotal" readonly></div>
-    <div class="modal-actions"><button class="btn btn-secondary" onclick="closeModal('sellStockModal')">Cancel</button><button class="btn btn-danger" onclick="sellStock()">Sell</button></div>
+    <div class="form-group">
+      <label class="form-label">Select Stock</label>
+      <select class="form-input" id="sellStockSelect" onchange="updateSellDetails()"><option value="">-- Select Stock --</option></select>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Available Quantity</label>
+      <input type="text" class="form-input" id="sellAvailable" readonly>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Sell Date</label>
+      <input type="date" class="form-input" id="sellDate">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Sell Price (₹)</label>
+      <input type="number" class="form-input" id="sellPrice" placeholder="Enter sell price" step="0.01" min="0" oninput="updateSellTotal()">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Quantity to Sell</label>
+      <input type="number" class="form-input" id="sellQty" placeholder="0" min="1" oninput="updateSellTotal()">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Total Amount</label>
+      <input type="text" class="form-input" id="sellTotal" readonly>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal('sellStockModal')">Cancel</button>
+      <button class="btn btn-danger" onclick="sellStock()">Sell</button>
+    </div>
+  </div>
+</div>
+
+<!-- SIP Modal -->
+<div class="modal" id="addSIPModal">
+  <div class="modal-content">
+    <div class="modal-header"><h3 class="modal-title">Add SIP</h3><button class="close-btn" onclick="closeModal('addSIPModal')">&times;</button></div>
+    <div class="form-group"><label class="form-label">Stock Ticker</label><input type="text" class="form-input" id="sipTicker" placeholder="RELIANCE" style="text-transform:uppercase;"></div>
+    <div class="form-group"><label class="form-label">Monthly Amount (₹)</label><input type="number" class="form-input" id="sipAmount" placeholder="5000" min="1"></div>
+    <div class="form-group"><label class="form-label">Frequency</label><select class="form-input" id="sipFreq"><option value="monthly">Monthly</option><option value="quarterly">Quarterly</option><option value="yearly">Yearly</option></select></div>
+    <div class="form-group"><label class="form-label">Start Date</label><input type="date" class="form-input" id="sipStartDate"></div>
+    <div class="modal-actions"><button class="btn btn-secondary" onclick="closeModal('addSIPModal')">Cancel</button><button class="btn btn-success" onclick="addSIP()">Add SIP</button></div>
+  </div>
+</div>
+
+<!-- Goal Modal -->
+<div class="modal" id="addGoalModal">
+  <div class="modal-content">
+    <div class="modal-header"><h3 class="modal-title">Add Investment Goal</h3><button class="close-btn" onclick="closeModal('addGoalModal')">&times;</button></div>
+    <div class="form-group"><label class="form-label">Goal Name</label><input type="text" class="form-input" id="goalName" placeholder="e.g. Retirement Fund, Dream Home..."></div>
+    <div class="form-group"><label class="form-label">Target Amount (₹)</label><input type="number" class="form-input" id="goalTarget" placeholder="1000000" min="1"></div>
+    <div class="form-group"><label class="form-label">Target Date</label><input type="date" class="form-input" id="goalDate"></div>
+    <div class="form-group"><label class="form-label">Current Saved (₹)</label><input type="number" class="form-input" id="goalCurrent" placeholder="0" min="0"></div>
+    <div class="form-group"><label class="form-label">Notes</label><input type="text" class="form-input" id="goalNotes" placeholder="Optional notes..."></div>
+    <div class="modal-actions"><button class="btn btn-secondary" onclick="closeModal('addGoalModal')">Cancel</button><button class="btn btn-success" onclick="addGoal()">Add Goal</button></div>
+  </div>
+</div>
+
+<!-- Dividend Modal -->
+<div class="modal" id="addDividendModal">
+  <div class="modal-content">
+    <div class="modal-header"><h3 class="modal-title">Log Dividend</h3><button class="close-btn" onclick="closeModal('addDividendModal')">&times;</button></div>
+    <div class="form-group"><label class="form-label">Stock Ticker</label><input type="text" class="form-input" id="divTicker" placeholder="TCS" style="text-transform:uppercase;"></div>
+    <div class="form-group"><label class="form-label">Date Received</label><input type="date" class="form-input" id="divDate"></div>
+    <div class="form-group"><label class="form-label">Number of Shares</label><input type="number" class="form-input" id="divShares" placeholder="100" min="1" oninput="calcDivTotal()"></div>
+    <div class="form-group"><label class="form-label">Dividend Per Share (₹)</label><input type="number" class="form-input" id="divPerShare" placeholder="10.50" step="0.01" oninput="calcDivTotal()"></div>
+    <div class="form-group"><label class="form-label">Total Amount (₹)</label><input type="text" class="form-input" id="divTotal" readonly></div>
+    <div class="modal-actions"><button class="btn btn-secondary" onclick="closeModal('addDividendModal')">Cancel</button><button class="btn btn-success" onclick="addDividend()">Log Dividend</button></div>
   </div>
 </div>
 
@@ -549,6 +782,57 @@ let portfolioChart = null;
 let sectorChart    = null;
 const SECTOR_MAP   = JSON.parse(localStorage.getItem('sector_map') || '{}');
 
+// ===================== DATE HELPERS =====================
+function todayStr() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+/**
+ * For a SELL transaction: days between buyDate and sellDate.
+ * For a BUY  transaction: days since that buy date (open position).
+ * Returns e.g. "128d" or "128d (open)"
+ */
+function calcHoldingDays(t) {
+  if (t.action === 'SELL') {
+    if (t.meta?.buyDate && t.meta?.sellDate) {
+      const d = Math.floor((new Date(t.meta.sellDate) - new Date(t.meta.buyDate)) / 86400000);
+      return Math.max(0, d) + 'd';
+    }
+    if (t.meta?.holdingDays != null) return t.meta.holdingDays + 'd';
+    return '—';
+  }
+  if (t.action === 'BUY') {
+    const buyD = new Date(t.date);
+    const days  = Math.floor((Date.now() - buyD.getTime()) / 86400000);
+    return Math.max(0, days) + 'd (open)';
+  }
+  return '—';
+}
+
+function getHoldingBuyDate(ticker) {
+  const holding = portfolio.find(p => p.ticker === ticker);
+  if (holding?.buyDate) return holding.buyDate;
+
+  const buys = (transactions || []).filter(t => t.action === 'BUY' && t.stock === ticker);
+  if (!buys.length) return null;
+  const earliest = buys.reduce((min, t) => {
+    const dt = new Date(t.date).getTime();
+    return dt < min ? dt : min;
+  }, Infinity);
+  return new Date(earliest).toISOString().slice(0, 10);
+}
+
+/**
+ * Days a currently-held position has been open,
+ * using the buyDate stored on the holding object.
+ */
+function calcOpenHoldingDays(ticker) {
+  const buyDate = getHoldingBuyDate(ticker);
+  if (!buyDate) return '—';
+  const days = Math.floor((Date.now() - new Date(buyDate).getTime()) / 86400000);
+  return Math.max(0, days) + 'd';
+}
+
 // ===================== INIT =====================
 document.addEventListener('DOMContentLoaded', async () => {
   const savedTheme = localStorage.getItem('theme') || 'light';
@@ -560,9 +844,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     localStorage.setItem('sector_cache_v2', '1');
   }
   await loadWatchlist();
-  loadPortfolio();
+  loadPortfolio();            // first pass (may use avgPrice as CMP)
   loadTransactions();
   renderSectorEditor();
+  // After prices are loaded from watchlist, refresh portfolio stats & charts
+  // so P&L reflects real CMPs, not avgPrice fallback
+  setTimeout(() => {
+    loadPortfolio();
+    try { if (typeof recordSnapshot === 'function') recordSnapshot(); } catch(_) {}
+  }, 300);
 });
 
 const API_BASE = window.location.origin + '/api';
@@ -603,7 +893,12 @@ async function searchStocks(query) {
     const data = await res.json();
     const quotes = (data.quotes || []).filter(q => q.exchange === 'NSI' && q.quoteType === 'EQUITY');
     if (quotes.length > 0) {
-      el.innerHTML = quotes.map(q => `<div class="autocomplete-item" onclick="addStock('${q.symbol.replace('.NS','')}')"><div class="autocomplete-ticker">${q.symbol.replace('.NS','')}</div><div class="autocomplete-name">${q.longname||q.shortname||''}</div></div>`).join('');
+      el.innerHTML = quotes.map(q =>
+        `<div class="autocomplete-item" onclick="addStock('${q.symbol.replace('.NS','')}')">
+          <div class="autocomplete-ticker">${q.symbol.replace('.NS','')}</div>
+          <div class="autocomplete-name">${q.longname||q.shortname||''}</div>
+        </div>`
+      ).join('');
       el.classList.add('show');
     } else {
       el.innerHTML = '<div class="autocomplete-item">No results found</div>';
@@ -621,7 +916,14 @@ function renderSectorEditor() {
   if (!container) return;
   const allTickers = [...new Set([...watchlist, ...portfolio.map(h => h.ticker)])];
   if (allTickers.length === 0) { container.innerHTML = '<p style="color:var(--text-muted)">Add stocks to assign sectors.</p>'; return; }
-  container.innerHTML = allTickers.map(t => `<div style="display:flex;gap:10px;align-items:center;"><span style="font-family:'JetBrains Mono',monospace;width:100px;font-weight:600;">${t}</span><input type="text" value="${getSector(t)}" placeholder="e.g. IT, Banking, FMCG" style="flex:1;padding:6px 10px;border:1px solid var(--border);border-radius:5px;background:var(--bg-card);color:var(--text);" onchange="SECTOR_MAP['${t}']=this.value;saveSectorMap();"></div>`).join('');
+  container.innerHTML = allTickers.map(t =>
+    `<div style="display:flex;gap:10px;align-items:center;">
+      <span style="font-family:'JetBrains Mono',monospace;width:100px;font-weight:600;">${t}</span>
+      <input type="text" value="${getSector(t)}" placeholder="e.g. IT, Banking, FMCG"
+        style="flex:1;padding:6px 10px;border:1px solid var(--border);border-radius:5px;background:var(--bg-card);color:var(--text);"
+        onchange="SECTOR_MAP['${t}']=this.value;saveSectorMap();">
+    </div>`
+  ).join('');
 }
 
 // ===================== WATCHLIST =====================
@@ -655,14 +957,24 @@ async function loadWatchlist() {
     document.getElementById('stockDetailTabsContainer').style.display = 'none';
     return;
   }
-  gridEl.innerHTML = watchlist.map(t => `<div class="stock-card" data-ticker="${t}"><div class="skeleton" style="width:60%;margin-bottom:12px;"></div><div class="skeleton" style="width:40%;margin-bottom:12px;"></div><div class="skeleton" style="width:80%;"></div></div>`).join('');
+  gridEl.innerHTML = watchlist.map(t =>
+    `<div class="stock-card" data-ticker="${t}">
+      <div class="skeleton" style="width:60%;margin-bottom:12px;"></div>
+      <div class="skeleton" style="width:40%;margin-bottom:12px;"></div>
+      <div class="skeleton" style="width:80%;"></div>
+    </div>`
+  ).join('');
   for (const ticker of watchlist) {
     try {
       const { data, stale } = await fetchStockData(ticker);
       stockDetailCache[ticker] = data;
       if (data.quoteSummary?.result?.[0]) {
         const r = data.quoteSummary.result[0];
-        stockMeta[ticker] = { name: r.assetProfile?.longName || ticker, sector: r.assetProfile?.sector || SECTOR_MAP[ticker] || 'Unknown', industry: r.assetProfile?.industry || '' };
+        stockMeta[ticker] = {
+          name: r.assetProfile?.longName || ticker,
+          sector: r.assetProfile?.sector || SECTOR_MAP[ticker] || 'Unknown',
+          industry: r.assetProfile?.industry || ''
+        };
         if (r.assetProfile?.sector && !SECTOR_MAP[ticker]) { SECTOR_MAP[ticker] = stockMeta[ticker].sector; saveSectorMap(); }
         const cmp = r.financialData?.currentPrice?.raw || r.summaryDetail?.previousClose?.raw;
         if (cmp) stockPrices[ticker] = cmp;
@@ -672,6 +984,8 @@ async function loadWatchlist() {
   }
   renderStockDetailTabs();
   renderSectorEditor();
+  // Always refresh portfolio after all prices loaded (fixes 0% P&L)
+  loadPortfolio();
   if (document.getElementById('portfolio-tab').classList.contains('active')) loadPortfolio();
 }
 
@@ -681,9 +995,9 @@ function renderStockCard(ticker, data, stale) {
   if (!data.quoteSummary?.result?.length) { renderErrorCard(ticker); return; }
   const r  = data.quoteSummary.result[0];
   const sd = r.summaryDetail || {}, fd = r.financialData || {}, ks = r.defaultKeyStatistics || {}, ap = r.assetProfile || {};
-  const companyName = ap.longName || ticker;
-  const sector      = ap.sector   || SECTOR_MAP[ticker] || 'Unknown';
-  const industry    = ap.industry || '';
+  const companyName = ap.longName  || ticker;
+  const sector      = ap.sector    || SECTOR_MAP[ticker] || 'Unknown';
+  const industry    = ap.industry  || '';
   const cmp         = fd.currentPrice?.raw || sd.previousClose?.raw || 0;
   const prevClose   = sd.previousClose?.raw || cmp;
   const dayChange   = cmp - prevClose;
@@ -701,7 +1015,7 @@ function renderStockCard(ticker, data, stale) {
   const instit    = ks.heldPercentInstitutions?.raw;
   const rating    = calculateRating(roe, pe, revGrowth, de);
   const yahooUrl  = `https://finance.yahoo.com/quote/${ticker}.NS`;
-  const cardHTML  = `<div class="stock-card" data-ticker="${ticker}">
+  const cardHTML = `<div class="stock-card" data-ticker="${ticker}">
     <div class="stock-header" onclick="toggleDetails('${ticker}')">
       <div class="stock-title-row">
         <div>
@@ -759,7 +1073,13 @@ function renderStockCard(ticker, data, stale) {
 function renderErrorCard(ticker) {
   const gridEl   = document.getElementById('watchlistGrid');
   const existing = document.querySelector(`[data-ticker="${ticker}"]`);
-  const cardHTML = `<div class="stock-card" data-ticker="${ticker}"><div class="error-message">Error loading ${ticker}. Click refresh to try again.</div><div style="display:flex;gap:12px;margin-top:12px;"><button class="btn btn-secondary" onclick="refreshStock('${ticker}')">🔄 Refresh</button><button class="btn btn-danger" onclick="removeStock('${ticker}')">Remove</button></div></div>`;
+  const cardHTML = `<div class="stock-card" data-ticker="${ticker}">
+    <div class="error-message">Error loading ${ticker}. Click refresh to try again.</div>
+    <div style="display:flex;gap:12px;margin-top:12px;">
+      <button class="btn btn-secondary" onclick="refreshStock('${ticker}')">🔄 Refresh</button>
+      <button class="btn btn-danger" onclick="removeStock('${ticker}')">Remove</button>
+    </div>
+  </div>`;
   if (existing) existing.outerHTML = cardHTML;
   else { const d = document.createElement('div'); d.innerHTML = cardHTML; gridEl.appendChild(d.firstElementChild); }
 }
@@ -795,7 +1115,9 @@ function renderStockDetailTabs() {
   if (watchlist.length === 0) { document.getElementById('stockDetailTabsContainer').style.display='none'; return; }
   document.getElementById('stockDetailTabsContainer').style.display='block';
   const tabsEl = document.getElementById('stockDetailTabs');
-  tabsEl.innerHTML = watchlist.map((t,i) => `<button class="detail-tab-btn ${i===0?'active':''}" onclick="switchStockDetail('${t}')">${t}</button>`).join('');
+  tabsEl.innerHTML = watchlist.map((t,i) =>
+    `<button class="detail-tab-btn ${i===0?'active':''}" onclick="switchStockDetail('${t}')">${t}</button>`
+  ).join('');
   document.getElementById('detailFilter').onchange  = () => currentSelectedStock && renderStockDetailMetrics(currentSelectedStock);
   document.getElementById('detailSortBy').onchange  = () => currentSelectedStock && renderStockDetailMetrics(currentSelectedStock);
   if (watchlist.length > 0) switchStockDetail(watchlist[0]);
@@ -844,7 +1166,9 @@ function renderStockDetailMetrics(ticker) {
     if (ins2) m.push({name:'Inst. Holding',val:formatNumber(ins2*100,2)+'%',sort:ins2});
   }
   if (sort !== 'default') m.sort((a,b) => b.sort-a.sort);
-  el.innerHTML = m.map(x => `<div class="metric-tile"><div class="metric-label">${x.name}</div><div class="metric-value">${x.val}</div></div>`).join('') || '<p style="color:var(--text-muted);padding:20px;">No metrics for this filter.</p>';
+  el.innerHTML = m.map(x =>
+    `<div class="metric-tile"><div class="metric-label">${x.name}</div><div class="metric-value">${x.val}</div></div>`
+  ).join('') || '<p style="color:var(--text-muted);padding:20px;">No metrics for this filter.</p>';
 }
 
 function saveWatchlist() { localStorage.setItem('watchlist', JSON.stringify(watchlist)); }
@@ -877,7 +1201,10 @@ function sortHoldings(col) {
 
 function updateHoldingsTable() {
   const tbody=document.getElementById('holdingsTable');
-  if (portfolio.length===0) { tbody.innerHTML='<tr><td colspan="14" class="empty-state"><h3>No Holdings</h3><p>Add funds and buy stocks to start tracking your portfolio</p></td></tr>'; return; }
+  if (portfolio.length===0) {
+    tbody.innerHTML='<tr><td colspan="16" class="empty-state"><h3>No Holdings</h3><p>Add funds and buy stocks to start tracking your portfolio</p></td></tr>';
+    return;
+  }
   let totalMV=0;
   portfolio.forEach(h => { totalMV+=(stockPrices[h.ticker]||h.avgPrice)*h.qty; });
   let rows=portfolio.map(h => {
@@ -886,10 +1213,17 @@ function updateHoldingsTable() {
     const pl=value-invested, plPct=invested>0?(pl/invested)*100:0;
     const realized=transactions.reduce((a,t)=>t.action==='SELL'&&t.stock===h.ticker&&t.meta?.profit!=null?a+Number(t.meta.profit):a,0);
     const weight=totalMV>0?(value/totalMV)*100:0;
-    return {ticker:h.ticker,qty:h.qty,avgPrice:h.avgPrice,cp,invested,value,pl,plPct,realized,weight,sector:getSector(h.ticker),name:getCompanyName(h.ticker)};
+    // Days held: from buyDate stored on holding to today
+    const buyDate = getHoldingBuyDate(h.ticker);
+    const daysHeld = buyDate ? Math.max(0, Math.floor((Date.now()-new Date(buyDate).getTime())/86400000)) : null;
+    return {ticker:h.ticker,qty:h.qty,avgPrice:h.avgPrice,cp,invested,value,pl,plPct,realized,weight,
+            sector:getSector(h.ticker),name:getCompanyName(h.ticker),
+            buyDate:buyDate||'—', daysHeld};
   });
+
   const search=(document.getElementById('portfolioSearch')?.value||'').toUpperCase();
   if (search) rows=rows.filter(r=>r.ticker.includes(search)||r.name.toUpperCase().includes(search));
+
   const filterVal=document.getElementById('portfolioFilter')?.value||'all';
   if (filterVal==='profit') rows=rows.filter(r=>r.pl>0);
   else if (filterVal==='loss') rows=rows.filter(r=>r.pl<0);
@@ -901,10 +1235,20 @@ function updateHoldingsTable() {
     const sv=sfEl.value;
     if (sv) rows=rows.filter(r=>r.sector===sv);
   } else { document.getElementById('sectorFilter').style.display='none'; }
+
   const sortVal=document.getElementById('portfolioSortBy')?.value||'weight';
-  const sMap={weight:'weight',value:'value',pl:'pl',plpct:'plPct',realized:'realized',qty:'qty'};
-  if (sMap[sortVal]) rows.sort((a,b)=>holdingsSortAsc?a[sMap[sortVal]]-b[sMap[sortVal]]:b[sMap[sortVal]]-a[sMap[sortVal]]);
-  else if (sortVal==='sector') rows.sort((a,b)=>a.sector.localeCompare(b.sector));
+  const sMap={weight:'weight',value:'value',pl:'pl',plpct:'plPct',realized:'realized',qty:'qty',days:'daysHeld'};
+  if (sMap[sortVal]) {
+    rows.sort((a,b)=>{
+      const av=a[sMap[sortVal]]??-1, bv=b[sMap[sortVal]]??-1;
+      return holdingsSortAsc ? av-bv : bv-av;
+    });
+  } else if (holdingsSortCol==='stock') {
+    rows.sort((a,b)=>holdingsSortAsc?a.ticker.localeCompare(b.ticker):b.ticker.localeCompare(a.ticker));
+  } else if (sortVal==='sector') {
+    rows.sort((a,b)=>a.sector.localeCompare(b.sector));
+  }
+
   const maxW=Math.max(...rows.map(r=>r.weight),1);
   tbody.innerHTML=rows.map(r=>`<tr>
     <td><strong>${r.ticker}</strong></td>
@@ -912,11 +1256,13 @@ function updateHoldingsTable() {
     <td><span class="sector-badge">${r.sector}</span></td>
     <td>${r.qty}</td>
     <td>₹${formatNumber(r.avgPrice,2)}</td>
+    <td style="font-size:0.82rem;color:var(--text-muted);">${r.buyDate}</td>
     <td>₹${formatNumber(r.cp,2)}</td>
     <td>₹${formatNumber(r.invested,2)}</td>
     <td>₹${formatNumber(r.value,2)}</td>
     <td style="color:${r.pl>=0?'var(--gain)':'var(--loss)'}">${r.pl>=0?'+':''}₹${formatNumber(r.pl,2)}</td>
     <td style="color:${r.pl>=0?'var(--gain)':'var(--loss)'}">${r.plPct>=0?'+':''}${formatNumber(r.plPct,2)}%</td>
+    <td><span class="days-badge">${r.daysHeld!==null?r.daysHeld+'d':'—'}</span></td>
     <td style="color:${r.realized>=0?'var(--gain)':'var(--loss)'}">${r.realized>=0?'+':''}₹${formatNumber(r.realized,2)}</td>
     <td>${formatNumber(r.weight,2)}%</td>
     <td style="min-width:120px;"><div class="progress-bar-bg"><div class="progress-bar-fill" style="width:${(r.weight/maxW)*100}%"></div></div></td>
@@ -959,10 +1305,10 @@ function loadTransactions() {
   txs.sort((a,b)=>new Date(b.date)-new Date(a.date));
   if (txs.length===0) { tbody.innerHTML='<tr><td colspan="14" class="empty-state"><h3>No Transactions</h3><p>Your transaction history will appear here</p></td></tr>'; return; }
   tbody.innerHTML=txs.map(t=>{
-    const profit=t.meta?.profit!=null?t.meta.profit:null;
-    const profitPct=t.meta?.profitPct!=null?t.meta.profitPct:null;
-    const holdDays=t.meta?.holdingDays!=null?t.meta.holdingDays:'—';
-    const isBuySell=t.action==='BUY'||t.action==='SELL';
+    const profit    = t.meta?.profit    != null ? t.meta.profit    : null;
+    const profitPct = t.meta?.profitPct != null ? t.meta.profitPct : null;
+    const holdDays  = calcHoldingDays(t);   // ← uses our helper
+    const isBuySell = t.action==='BUY' || t.action==='SELL';
     return `<tr>
       <td>${t.date}</td>
       <td><span style="font-weight:600;color:${t.action==='BUY'?'var(--gain)':t.action==='SELL'?'var(--loss)':'var(--accent)'}">${t.action}</span></td>
@@ -976,27 +1322,40 @@ function loadTransactions() {
       <td>${t.meta?.avgCost?'₹'+formatNumber(t.meta.avgCost,2):'—'}</td>
       <td style="color:${profit>=0?'var(--gain)':profit<0?'var(--loss)':'var(--text-muted)'}">${profit!=null?(profit>=0?'+₹':'-₹')+Math.abs(formatNumber(profit,2)):'—'}</td>
       <td style="color:${profitPct>=0?'var(--gain)':profitPct<0?'var(--loss)':'var(--text-muted)'}">${profitPct!=null?(profitPct>=0?'+':'')+formatNumber(profitPct,2)+'%':'—'}</td>
-      <td>${holdDays}</td>
+      <td><span class="days-badge">${holdDays}</span></td>
       <td style="font-size:0.75rem;color:var(--text-muted);">${t.meta?.type||'—'}</td>
     </tr>`;
   }).join('');
 }
 
 function exportTransactions() {
-  const headers=['Date','Action','Stock','Qty','Price','Amount','Cash After','Profit/Loss','P/L %'];
-  const rows=transactions.map(t=>[t.date,t.action,t.stock||'',t.qty||'',t.price||'',t.amount,t.cashAfter||'',t.meta?.profit||'',t.meta?.profitPct||'']);
+  const headers=['Date','Action','Stock','Qty','Price','Amount','Cash After','Buy Date','Sell Date','Holding Days','Profit/Loss','P/L %'];
+  const rows=transactions.map(t=>[
+    t.date, t.action, t.stock||'', t.qty||'', t.price||'', t.amount, t.cashAfter||'',
+    t.meta?.buyDate||'', t.meta?.sellDate||'',
+    t.meta?.holdingDays||'', t.meta?.profit||'', t.meta?.profitPct||''
+  ]);
   downloadCSV([headers,...rows],'transactions.csv');
 }
 
 // ===================== BUY / SELL / FUNDS =====================
 function showAddFundsModal()  { document.getElementById('addFundsModal').classList.add('show'); }
 function showWithdrawModal()  { document.getElementById('withdrawModal').classList.add('show'); }
-function showBuyStockModal()  { document.getElementById('buyStockModal').classList.add('show'); }
+
+function showBuyStockModal() {
+  // Default buy date to today
+  document.getElementById('buyDate').value = todayStr();
+  document.getElementById('buyStockModal').classList.add('show');
+}
+
 function showSellStockModal() {
+  // Default sell date to today
+  document.getElementById('sellDate').value = todayStr();
   const sel=document.getElementById('sellStockSelect');
   sel.innerHTML='<option value="">-- Select Stock --</option>'+portfolio.map(h=>`<option value="${h.ticker}">${h.ticker} (${h.qty} shares)</option>`).join('');
   document.getElementById('sellStockModal').classList.add('show');
 }
+
 function closeModal(id) { document.getElementById(id).classList.remove('show'); }
 
 function addFunds() {
@@ -1004,7 +1363,7 @@ function addFunds() {
   if (!amt||amt<=0) { showToast('Enter a valid amount','error'); return; }
   cashBalance+=amt;
   localStorage.setItem('cash_balance',cashBalance.toString());
-  transactions.unshift({date:new Date().toISOString().slice(0,10),action:'DEPOSIT',amount:amt,cashAfter:cashBalance,meta:{type:'Fund Deposit'}});
+  transactions.unshift({date:todayStr(),action:'DEPOSIT',amount:amt,cashAfter:cashBalance,meta:{type:'Fund Deposit'}});
   saveTransactions();
   loadPortfolio();
   closeModal('addFundsModal');
@@ -1018,7 +1377,7 @@ function withdrawFunds() {
   if (amt>cashBalance) { showToast('Insufficient cash balance','error'); return; }
   cashBalance-=amt;
   localStorage.setItem('cash_balance',cashBalance.toString());
-  transactions.unshift({date:new Date().toISOString().slice(0,10),action:'WITHDRAW',amount:amt,cashAfter:cashBalance,meta:{type:'Withdrawal'}});
+  transactions.unshift({date:todayStr(),action:'WITHDRAW',amount:amt,cashAfter:cashBalance,meta:{type:'Withdrawal'}});
   saveTransactions();
   loadPortfolio();
   closeModal('withdrawModal');
@@ -1046,23 +1405,57 @@ function updateBuyTotal() {
 }
 
 function buyStock() {
-  const ticker=(document.getElementById('buyTicker').value||'').toUpperCase();
-  const price=parseFloat(document.getElementById('buyPrice').value);
-  const qty=parseInt(document.getElementById('buyQty').value);
+  const ticker  = (document.getElementById('buyTicker').value||'').toUpperCase();
+  const price   = parseFloat(document.getElementById('buyPrice').value);
+  const qty     = parseInt(document.getElementById('buyQty').value);
+  const buyDate = document.getElementById('buyDate').value || todayStr();
+
   if (!ticker||!price||!qty||price<=0||qty<=0) { showToast('Fill all fields correctly','error'); return; }
   const total=price*qty;
   if (total>cashBalance) { showToast('Insufficient cash balance','error'); return; }
+
   cashBalance-=total;
   localStorage.setItem('cash_balance',cashBalance.toString());
+
   const existing=portfolio.find(h=>h.ticker===ticker);
-  if (existing) { const newQty=existing.qty+qty; existing.avgPrice=((existing.avgPrice*existing.qty)+(price*qty))/newQty; existing.qty=newQty; }
-  else          { portfolio.push({ticker,avgPrice:price,qty}); }
+  if (existing) {
+    const newQty=existing.qty+qty;
+    existing.avgPrice=((existing.avgPrice*existing.qty)+(price*qty))/newQty;
+    existing.qty=newQty;
+    // Keep the original buyDate (first buy) — don't overwrite
+    if (!existing.buyDate) existing.buyDate = buyDate;
+  } else {
+    portfolio.push({ticker, avgPrice:price, qty, buyDate});
+  }
   savePortfolio();
-  transactions.unshift({date:new Date().toISOString().slice(0,10),action:'BUY',stock:ticker,qty,price,amount:total,cashAfter:cashBalance,meta:{type:'Market Buy',avgCost:portfolio.find(h=>h.ticker===ticker)?.avgPrice}});
+
+  // ── Auto-add to watchlist if not already there ──
+  if (!watchlist.includes(ticker)) {
+    watchlist.push(ticker);
+    saveWatchlist();
+    fetchStockData(ticker).then(({data, stale}) => {
+      stockDetailCache[ticker] = data;
+      renderStockCard(ticker, data, stale);
+      renderStockDetailTabs();
+    }).catch(() => renderErrorCard(ticker));
+  }
+
+  transactions.unshift({
+    date: buyDate,
+    action: 'BUY',
+    stock: ticker, qty, price,
+    amount: total,
+    cashAfter: cashBalance,
+    meta: {
+      type: 'Market Buy',
+      avgCost: portfolio.find(h=>h.ticker===ticker)?.avgPrice,
+      buyDate
+    }
+  });
   saveTransactions();
   loadPortfolio();
   closeModal('buyStockModal');
-  showToast(`Bought ${qty} × ${ticker} @ ₹${formatNumber(price,2)}`,'success');
+  showToast(`Bought ${qty} × ${ticker} @ ₹${formatNumber(price,2)} | Auto-added to Watchlist ✓`,'success');
   setTimeout(()=>{ try { if(typeof recordSnapshot==='function') recordSnapshot(); } catch(_){} }, 500);
 }
 
@@ -1078,24 +1471,47 @@ function updateSellTotal() {
 }
 
 function sellStock() {
-  const ticker=document.getElementById('sellStockSelect').value;
-  const price=parseFloat(document.getElementById('sellPrice').value);
-  const qty=parseInt(document.getElementById('sellQty').value);
+  const ticker   = document.getElementById('sellStockSelect').value;
+  const price    = parseFloat(document.getElementById('sellPrice').value);
+  const qty      = parseInt(document.getElementById('sellQty').value);
+  const sellDate = document.getElementById('sellDate').value || todayStr();
+
   if (!ticker||!price||!qty) { showToast('Fill all fields','error'); return; }
   const h=portfolio.find(h=>h.ticker===ticker);
   if (!h||qty>h.qty) { showToast('Insufficient shares','error'); return; }
-  const total=price*qty;
-  const profit=(price-h.avgPrice)*qty;
-  const profitPct=h.avgPrice>0?((price-h.avgPrice)/h.avgPrice)*100:0;
-  const buys=transactions.filter(t=>t.action==='BUY'&&t.stock===ticker);
-  const firstBuy=buys.length?new Date(Math.min(...buys.map(t=>new Date(t.date).getTime()))):new Date();
-  const holdingDays=Math.floor((new Date()-firstBuy)/86400000);
+
+  const total     = price*qty;
+  const profit    = (price-h.avgPrice)*qty;
+  const profitPct = h.avgPrice>0?((price-h.avgPrice)/h.avgPrice)*100:0;
+
+  // Use the buyDate stored on the holding (set at time of purchase)
+  const buyDateStr = h.buyDate || (() => {
+    const buys=transactions.filter(t=>t.action==='BUY'&&t.stock===ticker);
+    return buys.length ? buys[buys.length-1].date : sellDate;
+  })();
+  const holdingDays = Math.max(0, Math.floor((new Date(sellDate)-new Date(buyDateStr))/86400000));
+
   cashBalance+=total;
   localStorage.setItem('cash_balance',cashBalance.toString());
+
   h.qty-=qty;
   if (h.qty===0) { const idx=portfolio.indexOf(h); portfolio.splice(idx,1); }
   savePortfolio();
-  transactions.unshift({date:new Date().toISOString().slice(0,10),action:'SELL',stock:ticker,qty,price,amount:total,cashAfter:cashBalance,meta:{profit,profitPct,holdingDays,type:holdingDays>=365?'LTCG':'STCG',avgCost:h.avgPrice}});
+
+  transactions.unshift({
+    date: sellDate,
+    action: 'SELL',
+    stock: ticker, qty, price,
+    amount: total,
+    cashAfter: cashBalance,
+    meta: {
+      profit, profitPct, holdingDays,
+      type: holdingDays>=365?'LTCG':'STCG',
+      avgCost: h.avgPrice,
+      buyDate: buyDateStr,
+      sellDate
+    }
+  });
   saveTransactions();
   loadPortfolio();
   closeModal('sellStockModal');
@@ -1104,6 +1520,7 @@ function sellStock() {
 }
 
 function quickSell(ticker) {
+  document.getElementById('sellDate').value = todayStr();
   const sel=document.getElementById('sellStockSelect');
   sel.innerHTML='<option value="">-- Select Stock --</option>'+portfolio.map(h=>`<option value="${h.ticker}">${h.ticker} (${h.qty} shares)</option>`).join('');
   sel.value=ticker;
@@ -1116,12 +1533,13 @@ function quickSell(ticker) {
 
 // ===================== EXPORT =====================
 function exportPortfolioCSV() {
-  const headers=['Ticker','Company','Sector','Qty','Avg Price','CMP','Invested','Market Value','P&L','P&L %','Weight'];
+  const headers=['Ticker','Company','Sector','Qty','Avg Price','Buy Date','Days Held','CMP','Invested','Market Value','P&L','P&L %','Weight'];
   let totalMV=0;
   portfolio.forEach(h=>{totalMV+=(stockPrices[h.ticker]||h.avgPrice)*h.qty;});
   const rows=portfolio.map(h=>{
     const cp=stockPrices[h.ticker]||h.avgPrice, inv=h.avgPrice*h.qty, val=cp*h.qty, pl=val-inv, plp=inv>0?(pl/inv)*100:0, w=totalMV>0?(val/totalMV)*100:0;
-    return [h.ticker,getCompanyName(h.ticker),getSector(h.ticker),h.qty,h.avgPrice.toFixed(2),cp.toFixed(2),inv.toFixed(2),val.toFixed(2),pl.toFixed(2),plp.toFixed(2)+'%',w.toFixed(2)+'%'];
+    const dh=h.buyDate?Math.max(0,Math.floor((Date.now()-new Date(h.buyDate).getTime())/86400000)):'—';
+    return [h.ticker,getCompanyName(h.ticker),getSector(h.ticker),h.qty,h.avgPrice.toFixed(2),h.buyDate||'—',dh,cp.toFixed(2),inv.toFixed(2),val.toFixed(2),pl.toFixed(2),plp.toFixed(2)+'%',w.toFixed(2)+'%'];
   });
   downloadCSV([headers,...rows],'portfolio.csv');
 }
@@ -1180,6 +1598,12 @@ function switchTab(tab) {
   if (el) el.classList.add('active');
   if (tab==='portfolio')    loadPortfolio();
   if (tab==='transactions') loadTransactions();
+  if (tab==='sold')         loadSoldStocks();
+  if (tab==='sip')          loadSIPTab();
+  if (tab==='goals')        loadGoalsTab();
+  if (tab==='dividends')    loadDividendsTab();
+  if (tab==='tax')          { populateTaxYears(); renderTaxReport(); }
+  if (tab==='research')     populateResearchPicker();
 }
 
 function savePortfolio()    { localStorage.setItem('portfolio',JSON.stringify(portfolio)); }
@@ -1195,6 +1619,463 @@ function clearAllData() {
 document.addEventListener('click', e => {
   if (!e.target.closest('.search-container')) document.getElementById('autocompleteResults').classList.remove('show');
 });
+
+// ===================== SOLD STOCKS =====================
+function loadSoldStocks() {
+  const sells = transactions.filter(t => t.action === 'SELL');
+  const tbody = document.getElementById('soldTable');
+  let totalProfit = 0, stcg = 0, ltcg = 0;
+  sells.forEach(t => {
+    const p = t.meta?.profit || 0;
+    totalProfit += p;
+    if (t.meta?.type === 'LTCG') ltcg += p; else stcg += p;
+  });
+  const profitEl = document.getElementById('sold-total-profit');
+  if (profitEl) { profitEl.textContent = formatIndian(totalProfit); profitEl.style.color = totalProfit >= 0 ? 'var(--gain)' : 'var(--loss)'; }
+  const countEl = document.getElementById('sold-count'); if (countEl) countEl.textContent = sells.length;
+  const stcgEl = document.getElementById('sold-stcg'); if (stcgEl) { stcgEl.textContent = formatIndian(stcg); stcgEl.style.color = stcg >= 0 ? 'var(--gain)' : 'var(--loss)'; }
+  const ltcgEl = document.getElementById('sold-ltcg'); if (ltcgEl) { ltcgEl.textContent = formatIndian(ltcg); ltcgEl.style.color = ltcg >= 0 ? 'var(--gain)' : 'var(--loss)'; }
+  if (sells.length === 0) { tbody.innerHTML = '<tr><td colspan="13" class="empty-state"><h3>No Sold Stocks</h3><p>Sell a stock to track your realized gains here.</p></td></tr>'; return; }
+  const sorted = [...sells].sort((a,b) => new Date(b.date) - new Date(a.date));
+  tbody.innerHTML = sorted.map(t => {
+    const profit = t.meta?.profit || 0, profitPct = t.meta?.profitPct || 0;
+    const buyPrice = t.meta?.avgCost || 0;
+    const invested = buyPrice * t.qty, proceeds = t.price * t.qty;
+    const days = t.meta?.holdingDays ?? '—';
+    const taxType = t.meta?.type || (days >= 365 ? 'LTCG' : 'STCG');
+    return `<tr>
+      <td><strong>${t.stock}</strong></td>
+      <td style="font-family:sans-serif;font-size:0.82rem;">${getCompanyName(t.stock) || '—'}</td>
+      <td>${t.date}</td>
+      <td>${t.meta?.buyDate || '—'}</td>
+      <td>${t.qty}</td>
+      <td>₹${formatNumber(buyPrice, 2)}</td>
+      <td>₹${formatNumber(t.price, 2)}</td>
+      <td>₹${formatNumber(invested, 2)}</td>
+      <td>₹${formatNumber(proceeds, 2)}</td>
+      <td style="color:${profit>=0?'var(--gain)':'var(--loss)'};font-weight:600;">${profit>=0?'+':''}₹${formatNumber(profit,2)}</td>
+      <td style="color:${profitPct>=0?'var(--gain)':'var(--loss)'};">${profitPct>=0?'+':''}${formatNumber(profitPct,2)}%</td>
+      <td><span class="days-badge">${days}${days!=='—'?'d':''}</span></td>
+      <td><span style="padding:2px 8px;border-radius:4px;font-size:0.78rem;font-weight:700;background:${taxType==='LTCG'?'rgba(210,153,34,0.15)':'rgba(248,81,73,0.15)'};color:${taxType==='LTCG'?'var(--warn)':'var(--loss)'};">${taxType}</span></td>
+    </tr>`;
+  }).join('');
+}
+
+function exportSoldCSV() {
+  const sells = transactions.filter(t => t.action === 'SELL');
+  const headers = ['Sell Date','Stock','Qty','Buy Price','Sell Price','Invested','Proceeds','P&L','P&L %','Days Held','Tax Type'];
+  const rows = sells.map(t => [
+    t.date, t.stock, t.qty, t.meta?.avgCost||0, t.price,
+    (t.meta?.avgCost||0)*t.qty, t.price*t.qty,
+    t.meta?.profit||0, (t.meta?.profitPct||0).toFixed(2)+'%',
+    t.meta?.holdingDays||'', t.meta?.type||''
+  ]);
+  downloadCSV([headers, ...rows], 'sold-stocks.csv');
+}
+
+// ===================== RESEARCH MODULE =====================
+function populateResearchPicker() {
+  const sel = document.getElementById('researchStockPicker');
+  if (!sel) return;
+  const all = [...new Set([...watchlist, ...portfolio.map(h => h.ticker)])];
+  sel.innerHTML = '<option value="">-- Pick a stock --</option>' + all.map(t => `<option value="${t}">${t}</option>`).join('');
+}
+
+async function loadResearch(ticker) {
+  if (!ticker) return;
+  const el = document.getElementById('researchContent');
+  if (!el) return;
+  el.innerHTML = '<div class="loading">Loading research data for ' + ticker + '...</div>';
+  try {
+    const { data } = await fetchStockData(ticker);
+    const r = data.quoteSummary?.result?.[0];
+    if (!r) { el.innerHTML = '<div class="error-message">No data available for ' + ticker + '</div>'; return; }
+    const fd = r.financialData || {}, sd = r.summaryDetail || {}, ks = r.defaultKeyStatistics || {}, ap = r.assetProfile || {};
+    const cmp = fd.currentPrice?.raw || sd.previousClose?.raw || 0;
+    const pe = sd.trailingPE?.raw, pb = ks.priceToBook?.raw, roe = fd.returnOnEquity?.raw;
+    const hi52 = sd.fiftyTwoWeekHigh?.raw || 0, lo52 = sd.fiftyTwoWeekLow?.raw || 0;
+
+    // Analyst Target (from financialData targetMeanPrice if available, else estimate)
+    const targetMean = fd.targetMeanPrice?.raw || fd.targetHighPrice?.raw || null;
+    const targetUpside = targetMean ? ((targetMean - cmp) / cmp * 100) : null;
+
+    // Peers: stocks in same sector from watchlist
+    const sector = getSector(ticker);
+    const peers = [...new Set([...watchlist, ...portfolio.map(h => h.ticker)])].filter(t => t !== ticker && getSector(t) === sector).slice(0, 4);
+
+    el.innerHTML = `
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:24px;">
+        <!-- Analyst Target -->
+        <div class="analytics-card">
+          <h3>🎯 Analyst Target Price</h3>
+          <div style="display:flex;align-items:baseline;gap:12px;margin-bottom:12px;">
+            <span style="font-family:'JetBrains Mono',monospace;font-size:1.8rem;font-weight:700;">₹${formatNumber(cmp,2)}</span>
+            <span style="color:var(--text-muted);font-size:0.9rem;">CMP</span>
+          </div>
+          ${targetMean ? `
+          <div style="display:flex;align-items:baseline;gap:12px;margin-bottom:12px;">
+            <span style="font-family:'JetBrains Mono',monospace;font-size:1.5rem;font-weight:700;color:${targetMean>=cmp?'var(--gain)':'var(--loss)'};">₹${formatNumber(targetMean,2)}</span>
+            <span style="font-size:0.9rem;color:var(--text-muted);">Analyst Target</span>
+          </div>
+          <div style="padding:10px;border-radius:6px;background:${targetUpside>=0?'rgba(26,127,55,0.1)':'rgba(207,34,46,0.1)'};color:${targetUpside>=0?'var(--gain)':'var(--loss)'};font-weight:700;font-size:1.1rem;">
+            ${targetUpside>=0?'▲':'▼'} ${Math.abs(targetUpside).toFixed(1)}% ${targetUpside>=0?'Upside':'Downside'}
+          </div>` : '<p style="color:var(--text-muted);">Analyst target not available from data feed. Visit <a href="https://www.screener.in/company/' + ticker + '/" target="_blank" style="color:var(--accent);">Screener.in</a> for analyst ratings.</p>'}
+          <div style="margin-top:14px;">
+            <div style="display:flex;justify-content:space-between;font-size:0.82rem;margin-bottom:4px;"><span style="color:var(--text-muted);">52W Range</span><span style="font-family:'JetBrains Mono',monospace;">₹${formatNumber(lo52,2)} – ₹${formatNumber(hi52,2)}</span></div>
+            <div class="progress-bar-bg"><div class="progress-bar-fill" style="width:${hi52>lo52?Math.max(0,Math.min(100,((cmp-lo52)/(hi52-lo52))*100)):50}%;background:var(--accent);"></div></div>
+            <div style="display:flex;justify-content:space-between;font-size:0.75rem;margin-top:2px;color:var(--text-muted);"><span>52W Low</span><span>52W High</span></div>
+          </div>
+        </div>
+        <!-- Technical Indicators -->
+        <div class="analytics-card">
+          <h3>📊 Key Metrics Snapshot</h3>
+          <div class="metrics-grid" style="grid-template-columns:1fr 1fr;gap:10px;">
+            ${pe ? `<div class="metric-tile"><div class="metric-label">P/E Ratio</div><div class="metric-value">${formatNumber(pe,2)}</div></div>` : ''}
+            ${pb ? `<div class="metric-tile"><div class="metric-label">P/B Ratio</div><div class="metric-value">${formatNumber(pb,2)}</div></div>` : ''}
+            ${roe ? `<div class="metric-tile"><div class="metric-label">ROE</div><div class="metric-value">${formatNumber(roe*100,2)}%</div></div>` : ''}
+            ${fd.debtToEquity?.raw!=null ? `<div class="metric-tile"><div class="metric-label">D/E Ratio</div><div class="metric-value">${formatNumber(fd.debtToEquity.raw/100,2)}</div></div>` : ''}
+            ${fd.profitMargins?.raw ? `<div class="metric-tile"><div class="metric-label">Net Margin</div><div class="metric-value">${formatNumber(fd.profitMargins.raw*100,2)}%</div></div>` : ''}
+            ${fd.revenueGrowth?.raw ? `<div class="metric-tile"><div class="metric-label">Revenue Growth</div><div class="metric-value" style="color:${fd.revenueGrowth.raw>=0?'var(--gain)':'var(--loss)'};">${formatNumber(fd.revenueGrowth.raw*100,2)}%</div></div>` : ''}
+            ${sd.dividendYield?.raw ? `<div class="metric-tile"><div class="metric-label">Div Yield</div><div class="metric-value">${formatNumber(sd.dividendYield.raw*100,2)}%</div></div>` : ''}
+            ${sd.marketCap?.raw ? `<div class="metric-tile"><div class="metric-label">Market Cap</div><div class="metric-value">${formatIndian(sd.marketCap.raw)}</div></div>` : ''}
+          </div>
+        </div>
+      </div>
+      <!-- RSI / MACD placeholder with live links -->
+      <div class="analytics-card-full" style="margin-bottom:20px;">
+        <h3>📈 Technical Analysis — Live Charts</h3>
+        <p style="color:var(--text-muted);font-size:0.88rem;margin-bottom:14px;">Real-time RSI, MACD, Moving Averages from TradingView & Screener.in:</p>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;">
+          <a href="https://finance.yahoo.com/chart/${ticker}.NS?indicators=rsi,macd,sma_20,sma_50,sma_200" target="_blank" class="action-btn">📊 Yahoo Finance Chart</a>
+          <a href="https://www.screener.in/company/${ticker}/consolidated/#charts" target="_blank" class="action-btn">🔍 Screener.in Charts</a>
+          <a href="https://chartink.com/screener/rsi-below-30" target="_blank" class="action-btn">📉 ChartInk Technicals</a>
+          <a href="https://www.tradingview.com/chart/?symbol=NSE:${ticker}" target="_blank" class="action-btn">📈 TradingView</a>
+        </div>
+        <div style="margin-top:16px;padding:14px;background:var(--bg);border:1px solid var(--border);border-radius:6px;font-size:0.82rem;color:var(--text-muted);line-height:1.7;">
+          <strong style="color:var(--text);">Technical signals based on price data:</strong><br>
+          • <strong>RSI</strong>: &lt;30 = Oversold (buy signal), &gt;70 = Overbought (sell signal)<br>
+          • <strong>MACD</strong>: MACD line crossing above signal = Bullish; below = Bearish<br>
+          • <strong>SMA 20/50/200</strong>: Price above all 3 = Strong uptrend. Golden cross (50&gt;200) = Bullish signal.<br>
+          • <strong>52W Position</strong>: ${hi52>lo52?((cmp-lo52)/(hi52-lo52)*100).toFixed(0)+'% of 52-week range':'N/A'} — ${cmp>hi52*0.95?'Near 52W High 🔥':cmp<lo52*1.05?'Near 52W Low 📉':'Mid-range'}
+        </div>
+      </div>
+      <!-- News Feed -->
+      <div class="analytics-card-full" style="margin-bottom:20px;">
+        <h3>📰 News & Latest Updates — ${ticker}</h3>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;">
+          <a href="https://finance.yahoo.com/quote/${ticker}.NS/news/" target="_blank" class="action-btn">Yahoo Finance News</a>
+          <a href="https://economictimes.indiatimes.com/topic/${ticker}" target="_blank" class="action-btn">Economic Times</a>
+          <a href="https://www.moneycontrol.com/stocks/company_info/print_main.php?sc_id=${ticker}" target="_blank" class="action-btn">MoneyControl</a>
+          <a href="https://www.bseindia.com/stock-share-price/${ticker}/${ticker}/quicklinks/" target="_blank" class="action-btn">BSE Filings</a>
+        </div>
+        <p style="font-size:0.82rem;color:var(--text-muted);">Click any link above to get the latest news, announcements, and filings for ${ticker}.</p>
+      </div>
+      <!-- Peer Comparison -->
+      <div class="analytics-card-full">
+        <h3>🔍 Peer Comparison — ${sector} Sector</h3>
+        ${peers.length === 0 ? '<p style="color:var(--text-muted);">Add more stocks from the same sector to your watchlist to see peer comparison.</p>' :
+        `<div style="overflow-x:auto;"><table class="xirr-table" id="peerTable">
+          <thead><tr><th>Stock</th><th>CMP</th><th>P/E</th><th>P/B</th><th>ROE</th><th>Net Margin</th><th>Rev Growth</th><th>Mkt Cap</th></tr></thead>
+          <tbody id="peerTableBody"><tr><td colspan="8" style="text-align:center;padding:20px;color:var(--text-muted);">Loading peers...</td></tr></tbody>
+        </table></div>`}
+      </div>`;
+    // Load peers in background
+    if (peers.length > 0) loadPeerData(ticker, peers);
+  } catch(e) {
+    el.innerHTML = '<div class="error-message">Error loading research: ' + e.message + '</div>';
+  }
+}
+
+async function loadPeerData(mainTicker, peers) {
+  const allTickers = [mainTicker, ...peers];
+  const results = await Promise.allSettled(allTickers.map(t => fetchStockData(t)));
+  const tbody = document.getElementById('peerTableBody');
+  if (!tbody) return;
+  const rows = allTickers.map((t, i) => {
+    if (results[i].status !== 'fulfilled') return `<tr><td colspan="8">${t} — error</td></tr>`;
+    const d = results[i].value.data;
+    const r = d.quoteSummary?.result?.[0] || {};
+    const fd = r.financialData || {}, sd = r.summaryDetail || {}, ks = r.defaultKeyStatistics || {};
+    const cmp = fd.currentPrice?.raw || sd.previousClose?.raw || 0;
+    const isMain = t === mainTicker;
+    return `<tr style="${isMain?'background:rgba(88,166,255,0.06);font-weight:700;':''}">
+      <td><strong>${t}</strong>${isMain?' ★':''}</td>
+      <td>₹${formatNumber(cmp,2)}</td>
+      <td>${sd.trailingPE?.raw ? formatNumber(sd.trailingPE.raw,1) : '—'}</td>
+      <td>${ks.priceToBook?.raw ? formatNumber(ks.priceToBook.raw,2) : '—'}</td>
+      <td>${fd.returnOnEquity?.raw ? formatNumber(fd.returnOnEquity.raw*100,1)+'%' : '—'}</td>
+      <td>${fd.profitMargins?.raw ? formatNumber(fd.profitMargins.raw*100,1)+'%' : '—'}</td>
+      <td style="color:${fd.revenueGrowth?.raw>=0?'var(--gain)':'var(--loss)'};">${fd.revenueGrowth?.raw != null ? (fd.revenueGrowth.raw>=0?'+':'')+formatNumber(fd.revenueGrowth.raw*100,1)+'%' : '—'}</td>
+      <td>${sd.marketCap?.raw ? formatIndian(sd.marketCap.raw) : '—'}</td>
+    </tr>`;
+  }).join('');
+  tbody.innerHTML = rows;
+}
+
+// ===================== SIP TRACKER =====================
+let sipList = JSON.parse(localStorage.getItem('sip_list') || '[]');
+function saveSIPList() { localStorage.setItem('sip_list', JSON.stringify(sipList)); }
+function showAddSIPModal() { document.getElementById('sipStartDate').value = todayStr(); document.getElementById('addSIPModal').classList.add('show'); }
+
+function addSIP() {
+  const ticker = (document.getElementById('sipTicker').value || '').toUpperCase();
+  const amount = parseFloat(document.getElementById('sipAmount').value);
+  const freq = document.getElementById('sipFreq').value;
+  const startDate = document.getElementById('sipStartDate').value || todayStr();
+  if (!ticker || !amount || amount <= 0) { showToast('Fill all SIP fields', 'error'); return; }
+  sipList.push({ id: Date.now(), ticker, amount, freq, startDate, active: true });
+  saveSIPList();
+  closeModal('addSIPModal');
+  document.getElementById('sipTicker').value = '';
+  document.getElementById('sipAmount').value = '';
+  loadSIPTab();
+  showToast(`SIP added: ₹${formatNumber(amount,0)}/month in ${ticker}`, 'success');
+}
+
+function deleteSIP(id) {
+  sipList = sipList.filter(s => s.id !== id);
+  saveSIPList();
+  loadSIPTab();
+}
+
+function loadSIPTab() {
+  const tbody = document.getElementById('sipTable');
+  if (!tbody) return;
+  let totalInvested = 0, monthly = 0;
+  const rows = sipList.map(s => {
+    // Calculate installments based on frequency and start date
+    const start = new Date(s.startDate);
+    const now = new Date();
+    let months = (now.getFullYear() - start.getFullYear()) * 12 + (now.getMonth() - start.getMonth()) + 1;
+    let installments = s.freq === 'monthly' ? months : s.freq === 'quarterly' ? Math.floor(months/3)+1 : Math.floor(months/12)+1;
+    installments = Math.max(1, installments);
+    const invested = s.amount * installments;
+    totalInvested += invested;
+    if (s.freq === 'monthly') monthly += s.amount;
+    else if (s.freq === 'quarterly') monthly += s.amount / 3;
+    else monthly += s.amount / 12;
+    // Current value: use stockPrices if available
+    const cmp = stockPrices[s.ticker] || 0;
+    const currentValue = cmp > 0 ? (invested / (cmp * 0.98)) * cmp : invested; // rough estimate
+    const pl = currentValue - invested;
+    return `<tr>
+      <td><strong>${s.ticker}</strong></td>
+      <td>${s.freq.charAt(0).toUpperCase()+s.freq.slice(1)}</td>
+      <td>₹${formatNumber(s.amount,0)}</td>
+      <td>${s.startDate}</td>
+      <td>${installments}</td>
+      <td>₹${formatNumber(invested,2)}</td>
+      <td>${cmp > 0 ? '₹'+formatNumber(currentValue,2) : '—'}</td>
+      <td style="color:${pl>=0?'var(--gain)':'var(--loss)'};">${pl>=0?'+':''}₹${formatNumber(pl,2)}</td>
+      <td><button class="btn btn-danger" style="padding:4px 10px;font-size:0.78rem;" onclick="deleteSIP(${s.id})">Remove</button></td>
+    </tr>`;
+  });
+  if (sipList.length === 0) { tbody.innerHTML = '<tr><td colspan="9" class="empty-state"><h3>No SIPs set up</h3><p>Add a recurring SIP to track your regular investments.</p></td></tr>'; }
+  else tbody.innerHTML = rows.join('');
+  const tiEl = document.getElementById('sip-total-invested'); if (tiEl) tiEl.textContent = formatIndian(totalInvested);
+  const acEl = document.getElementById('sip-active-count'); if (acEl) acEl.textContent = sipList.length;
+  const moEl = document.getElementById('sip-monthly'); if (moEl) moEl.textContent = formatIndian(monthly);
+}
+
+// ===================== GOALS =====================
+let goalsList = JSON.parse(localStorage.getItem('goals_list') || '[]');
+function saveGoalsList() { localStorage.setItem('goals_list', JSON.stringify(goalsList)); }
+function showAddGoalModal() { document.getElementById('goalDate').value = new Date(Date.now()+365*86400000).toISOString().slice(0,10); document.getElementById('addGoalModal').classList.add('show'); }
+
+function addGoal() {
+  const name = document.getElementById('goalName').value;
+  const target = parseFloat(document.getElementById('goalTarget').value);
+  const date = document.getElementById('goalDate').value;
+  const current = parseFloat(document.getElementById('goalCurrent').value) || 0;
+  const notes = document.getElementById('goalNotes').value;
+  if (!name || !target || !date) { showToast('Fill all goal fields', 'error'); return; }
+  goalsList.push({ id: Date.now(), name, target, date, current, notes });
+  saveGoalsList();
+  closeModal('addGoalModal');
+  document.getElementById('goalName').value = ''; document.getElementById('goalTarget').value = ''; document.getElementById('goalNotes').value = '';
+  loadGoalsTab();
+  showToast(`Goal added: ${name}`, 'success');
+}
+
+function deleteGoal(id) { goalsList = goalsList.filter(g => g.id !== id); saveGoalsList(); loadGoalsTab(); }
+
+function updateGoalProgress(id, val) {
+  const g = goalsList.find(g => g.id === id);
+  if (g) { g.current = parseFloat(val) || 0; saveGoalsList(); loadGoalsTab(); }
+}
+
+function loadGoalsTab() {
+  const el = document.getElementById('goalsContainer');
+  if (!el) return;
+  const portfolioValue = (() => { let v = cashBalance || 0; portfolio.forEach(h => { v += (stockPrices[h.ticker] || h.avgPrice) * h.qty; }); return v; })();
+  if (goalsList.length === 0) { el.innerHTML = '<div class="empty-state"><h3>No Goals Set</h3><p>Set a financial goal (e.g. ₹10L by 2027) and track your progress.</p></div>'; return; }
+  el.innerHTML = goalsList.map(g => {
+    const pct = Math.min(100, (g.current / g.target) * 100);
+    const daysLeft = Math.max(0, Math.floor((new Date(g.date) - Date.now()) / 86400000));
+    const monthsLeft = Math.max(0, (daysLeft / 30)).toFixed(0);
+    const remaining = Math.max(0, g.target - g.current);
+    const monthlyNeeded = monthsLeft > 0 ? remaining / monthsLeft : 0;
+    return `<div class="analytics-card-full" style="margin-bottom:16px;">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px;">
+        <div>
+          <h3 style="font-size:1.2rem;margin-bottom:4px;">🎯 ${g.name}</h3>
+          <p style="color:var(--text-muted);font-size:0.85rem;">${g.notes || ''}</p>
+        </div>
+        <button class="btn btn-danger" style="padding:5px 12px;font-size:0.8rem;" onclick="deleteGoal(${g.id})">Delete</button>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:14px;margin:16px 0;">
+        <div class="metric-tile"><div class="metric-label">Target</div><div class="metric-value">${formatIndian(g.target)}</div></div>
+        <div class="metric-tile"><div class="metric-label">Saved / Invested</div><div class="metric-value" style="color:var(--accent);">${formatIndian(g.current)}</div></div>
+        <div class="metric-tile"><div class="metric-label">Remaining</div><div class="metric-value" style="color:var(--loss);">${formatIndian(remaining)}</div></div>
+        <div class="metric-tile"><div class="metric-label">Target Date</div><div class="metric-value" style="font-size:0.95rem;">${g.date}</div></div>
+        <div class="metric-tile"><div class="metric-label">Time Left</div><div class="metric-value">${daysLeft}d</div></div>
+        <div class="metric-tile"><div class="metric-label">Monthly Needed</div><div class="metric-value">${formatIndian(monthlyNeeded)}</div></div>
+      </div>
+      <div style="margin-bottom:8px;display:flex;justify-content:space-between;font-size:0.85rem;">
+        <span style="color:var(--text-muted);">Progress</span>
+        <strong style="color:${pct>=100?'var(--gain)':pct>60?'var(--warn)':'var(--accent)'};">${pct.toFixed(1)}%</strong>
+      </div>
+      <div class="progress-bar-bg" style="height:12px;border-radius:6px;">
+        <div class="progress-bar-fill" style="width:${pct}%;height:12px;border-radius:6px;background:${pct>=100?'var(--gain)':pct>60?'var(--warn)':'var(--accent)'};transition:width 0.6s ease;"></div>
+      </div>
+      <div style="margin-top:14px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+        <label style="font-size:0.85rem;color:var(--text-muted);">Update progress (₹):</label>
+        <input type="number" value="${g.current}" style="padding:6px 10px;border:1px solid var(--border);border-radius:6px;background:var(--bg-card);color:var(--text);width:150px;" onchange="updateGoalProgress(${g.id},this.value)">
+        ${portfolioValue > 0 ? `<span style="font-size:0.8rem;color:var(--text-muted);">Portfolio value: ${formatIndian(portfolioValue)}</span>
+        <button class="btn btn-secondary" style="padding:5px 12px;font-size:0.8rem;" onclick="updateGoalProgress(${g.id},${portfolioValue.toFixed(2)});document.querySelector('[onchange=\\'updateGoalProgress(${g.id},this.value)\\']').value=${portfolioValue.toFixed(2)}">Use Portfolio Value</button>` : ''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ===================== DIVIDENDS =====================
+let dividendList = JSON.parse(localStorage.getItem('dividend_list') || '[]');
+function saveDividendList() { localStorage.setItem('dividend_list', JSON.stringify(dividendList)); }
+function showAddDividendModal() { document.getElementById('divDate').value = todayStr(); document.getElementById('addDividendModal').classList.add('show'); }
+function calcDivTotal() {
+  const s = parseFloat(document.getElementById('divShares').value) || 0;
+  const p = parseFloat(document.getElementById('divPerShare').value) || 0;
+  document.getElementById('divTotal').value = s && p ? '₹' + formatNumber(s*p, 2) : '₹0';
+}
+function addDividend() {
+  const ticker = (document.getElementById('divTicker').value || '').toUpperCase();
+  const date = document.getElementById('divDate').value || todayStr();
+  const shares = parseFloat(document.getElementById('divShares').value);
+  const perShare = parseFloat(document.getElementById('divPerShare').value);
+  if (!ticker || !shares || !perShare) { showToast('Fill all dividend fields', 'error'); return; }
+  dividendList.push({ id: Date.now(), ticker, date, shares, perShare, total: shares * perShare });
+  saveDividendList();
+  closeModal('addDividendModal');
+  document.getElementById('divTicker').value = ''; document.getElementById('divShares').value = ''; document.getElementById('divPerShare').value = ''; document.getElementById('divTotal').value = '';
+  loadDividendsTab();
+  showToast(`Dividend logged: ₹${formatNumber(shares*perShare,2)} from ${ticker}`, 'success');
+}
+function deleteDividend(id) { dividendList = dividendList.filter(d => d.id !== id); saveDividendList(); loadDividendsTab(); }
+
+function loadDividendsTab() {
+  const tbody = document.getElementById('dividendTable');
+  if (!tbody) return;
+  const thisYear = new Date().getFullYear();
+  let total = 0, thisYearTotal = 0, lastYearTotal = 0;
+  dividendList.forEach(d => {
+    total += d.total;
+    const yr = new Date(d.date).getFullYear();
+    if (yr === thisYear) thisYearTotal += d.total;
+    if (yr === thisYear - 1) lastYearTotal += d.total;
+  });
+  const totEl = document.getElementById('div-total'); if (totEl) totEl.textContent = formatIndian(total);
+  const tyEl = document.getElementById('div-this-year'); if (tyEl) tyEl.textContent = formatIndian(thisYearTotal);
+  const lyEl = document.getElementById('div-last-year'); if (lyEl) lyEl.textContent = formatIndian(lastYearTotal);
+  if (dividendList.length === 0) { tbody.innerHTML = '<tr><td colspan="7" class="empty-state"><h3>No Dividends Logged</h3><p>Log dividend payouts to track your passive income.</p></td></tr>'; }
+  else {
+    const sorted = [...dividendList].sort((a,b) => new Date(b.date)-new Date(a.date));
+    tbody.innerHTML = sorted.map(d => `<tr>
+      <td>${d.date}</td>
+      <td><strong>${d.ticker}</strong></td>
+      <td style="font-family:sans-serif;font-size:0.82rem;">${getCompanyName(d.ticker)||'—'}</td>
+      <td>${d.shares}</td>
+      <td>₹${formatNumber(d.perShare,2)}</td>
+      <td style="color:var(--gain);font-weight:700;">₹${formatNumber(d.total,2)}</td>
+      <td><button class="btn btn-danger" style="padding:4px 10px;font-size:0.78rem;" onclick="deleteDividend(${d.id})">Delete</button></td>
+    </tr>`).join('');
+  }
+  // By-year breakdown
+  const byYearEl = document.getElementById('divByYearSection');
+  if (byYearEl && dividendList.length > 0) {
+    const byYear = {};
+    dividendList.forEach(d => { const yr = new Date(d.date).getFullYear(); byYear[yr] = (byYear[yr]||0) + d.total; });
+    byYearEl.innerHTML = `<h3 style="font-family:'Syne',sans-serif;margin-bottom:14px;">📅 Annual Dividend Income</h3>
+      <div style="display:flex;flex-wrap:wrap;gap:12px;">
+        ${Object.entries(byYear).sort((a,b)=>b[0]-a[0]).map(([yr,amt]) =>
+          `<div class="analytics-stat success" style="min-width:160px;"><div class="analytics-stat-label">${yr}</div><div class="analytics-stat-value">${formatIndian(amt)}</div></div>`
+        ).join('')}
+      </div>`;
+  }
+}
+
+// ===================== TAX REPORT =====================
+function populateTaxYears() {
+  const sel = document.getElementById('taxYear');
+  if (!sel) return;
+  const sells = transactions.filter(t => t.action === 'SELL');
+  const years = [...new Set(sells.map(t => t.date?.slice(0,4)))].sort((a,b) => b-a);
+  sel.innerHTML = '<option value="all">All Years</option>' + years.map(y => `<option value="${y}">${y}-${parseInt(y)+1} FY</option>`).join('');
+}
+
+function renderTaxReport() {
+  const tbody = document.getElementById('taxTable');
+  if (!tbody) return;
+  const yearFilter = document.getElementById('taxYear')?.value || 'all';
+  let sells = transactions.filter(t => t.action === 'SELL');
+  if (yearFilter !== 'all') sells = sells.filter(t => t.date?.startsWith(yearFilter));
+  let stcgGain = 0, ltcgGain = 0;
+  if (sells.length === 0) { tbody.innerHTML = '<tr><td colspan="9" class="empty-state"><h3>No Sell Transactions</h3><p>Tax report generates from your sell history.</p></td></tr>'; }
+  else {
+    tbody.innerHTML = sells.sort((a,b) => new Date(b.date)-new Date(a.date)).map(t => {
+      const profit = t.meta?.profit || 0;
+      const days = t.meta?.holdingDays ?? 0;
+      const isLTCG = days >= 365;
+      if (isLTCG) ltcgGain += profit; else stcgGain += profit;
+      // Post-budget 2024 rates: STCG 20%, LTCG 12.5% above ₹1.25L (handled at summary level)
+      const estTax = isLTCG ? Math.max(0, profit) * 0.125 : Math.max(0, profit) * 0.20;
+      return `<tr>
+        <td>${t.date}</td>
+        <td><strong>${t.stock}</strong></td>
+        <td>${t.qty}</td>
+        <td>₹${formatNumber(t.meta?.avgCost||0,2)}</td>
+        <td>₹${formatNumber(t.price,2)}</td>
+        <td style="color:${profit>=0?'var(--gain)':'var(--loss)'};font-weight:700;">${profit>=0?'+':''}₹${formatNumber(profit,2)}</td>
+        <td><span class="days-badge">${days}d</span></td>
+        <td><span style="padding:2px 8px;border-radius:4px;font-size:0.78rem;font-weight:700;background:${isLTCG?'rgba(210,153,34,0.15)':'rgba(248,81,73,0.15)'};color:${isLTCG?'var(--warn)':'var(--loss)'};">${isLTCG?'LTCG':'STCG'}</span></td>
+        <td style="color:var(--text-muted);font-size:0.82rem;">${profit>0?'₹'+formatNumber(estTax,2):'—'}</td>
+      </tr>`;
+    }).join('');
+  }
+  // Tax summary
+  const stcgTax = Math.max(0, stcgGain) * 0.20;
+  const ltcgExemption = 125000;
+  const ltcgTaxableGain = Math.max(0, ltcgGain - ltcgExemption);
+  const ltcgTax = ltcgTaxableGain * 0.125;
+  const totalTax = stcgTax + ltcgTax;
+  const sg = document.getElementById('tax-stcg-gain'); if (sg) { sg.textContent = formatIndian(stcgGain); sg.style.color = stcgGain>=0?'var(--gain)':'var(--loss)'; }
+  const lg = document.getElementById('tax-ltcg-gain'); if (lg) { lg.textContent = formatIndian(ltcgGain); lg.style.color = ltcgGain>=0?'var(--gain)':'var(--loss)'; }
+  const st = document.getElementById('tax-stcg-tax'); if (st) st.textContent = formatIndian(stcgTax);
+  const lt = document.getElementById('tax-ltcg-tax'); if (lt) lt.textContent = formatIndian(ltcgTax);
+  const tt = document.getElementById('tax-total'); if (tt) { tt.textContent = formatIndian(totalTax); tt.style.color = 'var(--loss)'; }
+}
+
+function exportTaxCSV() {
+  const yearFilter = document.getElementById('taxYear')?.value || 'all';
+  let sells = transactions.filter(t => t.action === 'SELL');
+  if (yearFilter !== 'all') sells = sells.filter(t => t.date?.startsWith(yearFilter));
+  const headers = ['Sell Date','Stock','Qty','Buy Price','Sell Price','Gain/Loss','Days Held','Type','Est Tax (20%/12.5%)'];
+  const rows = sells.map(t => {
+    const profit = t.meta?.profit || 0, days = t.meta?.holdingDays || 0, isLTCG = days >= 365;
+    const tax = isLTCG ? Math.max(0,profit)*0.125 : Math.max(0,profit)*0.20;
+    return [t.date, t.stock, t.qty, t.meta?.avgCost||0, t.price, profit.toFixed(2), days, isLTCG?'LTCG':'STCG', tax.toFixed(2)];
+  });
+  downloadCSV([headers,...rows], 'tax-report.csv');
+}
 </script>
 
 <!-- ===================== ANALYTICS MODULE ===================== -->
@@ -1273,14 +2154,15 @@ document.addEventListener('click', e => {
   }
 
   function portfolioCAGR() {
-    const buys = (transactions||[]).filter(t => t.action==='BUY');
-    if (!buys.length) return null;
-    const inv = calcTotalInvested(), cur = calcHoldingValue();
-    if (inv <= 0 || cur <= 0) return null;
-    const first = new Date(Math.min(...buys.map(t => new Date(t.date).getTime())));
-    const yrs   = (Date.now() - first.getTime()) / (86400000 * 365.25);
-    if (yrs < 0.002) return null;
-    return (Math.pow(cur/inv, 1/yrs) - 1) * 100;
+    const flows = [];
+    (transactions || []).forEach(t => {
+      if (t.action === 'BUY') flows.push({ amount: -(t.qty * t.price), date: new Date(t.date) });
+      if (t.action === 'SELL') flows.push({ amount:  (t.qty * t.price), date: new Date(t.date) });
+    });
+    const currentValue = calcHoldingValue();
+    if (currentValue > 0) flows.push({ amount: currentValue, date: new Date() });
+    if (flows.length < 2) return null;
+    try { return xirr(flows); } catch { return null; }
   }
 
   function stockXIRR(ticker) {
@@ -1297,16 +2179,18 @@ document.addEventListener('click', e => {
   }
 
   function stockCAGR(ticker) {
-    const buys = (transactions||[]).filter(t => t.action==='BUY' && t.stock===ticker);
-    if (!buys.length) return null;
+    const buys  = (transactions||[]).filter(t => t.action==='BUY'  && t.stock===ticker);
+    const sells = (transactions||[]).filter(t => t.action==='SELL' && t.stock===ticker);
     const h = (portfolio||[]).find(h => h.ticker===ticker);
-    if (!h) return null;
-    const inv = h.avgPrice*h.qty, cmp = stockPrices[ticker]||h.avgPrice, cur = cmp*h.qty;
-    if (inv <= 0 || cur <= 0) return null;
-    const first = new Date(Math.min(...buys.map(t => new Date(t.date).getTime())));
-    const yrs   = (Date.now() - first.getTime()) / (86400000 * 365.25);
-    if (yrs < 0.002) return null;
-    return (Math.pow(cur/inv, 1/yrs) - 1) * 100;
+    const flows = [];
+    buys.forEach(t  => flows.push({ amount: -(t.qty * t.price), date: new Date(t.date) }));
+    sells.forEach(t => flows.push({ amount:  (t.qty * t.price), date: new Date(t.date) }));
+    if (h && h.qty > 0) {
+      const cmp = stockPrices[ticker] || h.avgPrice;
+      flows.push({ amount: cmp * h.qty, date: new Date() });
+    }
+    if (flows.length < 2) return null;
+    try { return xirr(flows); } catch { return null; }
   }
 
   /* ── Drawdown ── */
@@ -1378,27 +2262,42 @@ document.addEventListener('click', e => {
   /* ── XIRR table ── */
   function renderXIRRTable() {
     const tbody=$('xirrTable'); if(!tbody) return;
-    if(!portfolio||portfolio.length===0){tbody.innerHTML='<tr><td colspan="6" style="text-align:center;padding:20px;color:var(--text-muted);">Buy stocks to see XIRR &amp; CAGR</td></tr>';return;}
+    if(!portfolio||portfolio.length===0){tbody.innerHTML='<tr><td colspan="7" style="text-align:center;padding:20px;color:var(--text-muted);">Buy stocks to see XIRR &amp; CAGR</td></tr>';return;}
     const fmt = v => v!==null?(v>=0?'+':'')+v.toFixed(2)+'%':'—';
     const clr = v => v===null?'':col(v);
     tbody.innerHTML = portfolio.map(h=>{
       const xi=stockXIRR(h.ticker), ca=stockCAGR(h.ticker);
       const inv=h.avgPrice*h.qty, cmp=stockPrices[h.ticker]||h.avgPrice, cur=cmp*h.qty;
-      const buys=(transactions||[]).filter(t=>t.action==='BUY'&&t.stock===h.ticker);
-      const first=buys.length?new Date(Math.min(...buys.map(t=>new Date(t.date).getTime()))):null;
-      const days=first?Math.floor((Date.now()-first.getTime())/86400000):'—';
-      return `<tr><td><strong>${h.ticker}</strong></td><td>${fi(inv)}</td><td>${fi(cur)}</td><td style="color:${clr(xi)};font-weight:600;">${fmt(xi)}</td><td style="color:${clr(ca)};font-weight:600;">${fmt(ca)}</td><td>${days}</td></tr>`;
+      const buyDateStr = getHoldingBuyDate(h.ticker) || '—';
+      const days = buyDateStr !== '—' ? Math.max(0,Math.floor((Date.now()-new Date(buyDateStr).getTime())/86400000)) : '—';
+      return `<tr>
+        <td><strong>${h.ticker}</strong></td>
+        <td style="font-size:0.8rem;color:var(--text-muted);">${buyDateStr||'—'}</td>
+        <td>${fi(inv)}</td><td>${fi(cur)}</td>
+        <td style="color:${clr(xi)};font-weight:600;">${fmt(xi)}</td>
+        <td style="color:${clr(ca)};font-weight:600;">${fmt(ca)}</td>
+        <td><span class="days-badge">${days}${days!=='—'?'d':''}</span></td>
+      </tr>`;
     }).join('');
   }
 
   /* ── Drawdown chart ── */
   function renderDrawdownChart() {
-    const snaps=filterByPeriod(getSnapshots(),perfPeriod);
-    const wrap=$('drawdownChartWrap'), ctx=$('drawdownChart');
-    if(!ctx) return;
-    if(drawdownChart){drawdownChart.destroy();drawdownChart=null;}
-    const dd=calcDrawdown(snaps);
-    if(snaps.length<2){if(wrap) wrap.innerHTML='<div class="analytics-empty" style="height:190px;"><div class="emoji">📊</div><h4>Not enough data yet</h4><p>Return tomorrow to see drawdown history.</p></div>';return;}
+    const snaps = filterByPeriod(getSnapshots(), perfPeriod);
+    const wrap = $('drawdownChartWrap');
+    if (!wrap) return;
+    if (drawdownChart) { drawdownChart.destroy(); drawdownChart = null; }
+    // Restore canvas if replaced by empty-state HTML
+    if (!$('drawdownChart')) {
+      wrap.innerHTML = '<canvas id="drawdownChart"></canvas>';
+    }
+    const ctx = $('drawdownChart');
+    if (!ctx) return;
+    if (snaps.length < 2) {
+      wrap.innerHTML = '<div class="analytics-empty" style="height:190px;"><div class="emoji">📊</div><h4>Not enough data yet</h4><p>Return tomorrow to see drawdown history.</p></div>';
+      return;
+    }
+    const dd = calcDrawdown(snaps);
     drawdownChart=new Chart(ctx,{type:'line',data:{labels:snaps.map(s=>s.date),datasets:[{label:'Drawdown %',data:dd.series,borderColor:'#f85149',backgroundColor:'rgba(248,81,73,0.10)',fill:true,tension:0.3,pointRadius:snaps.length>60?0:2,borderWidth:1.5}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.parsed.y.toFixed(2)+'%'}}},scales:{x:{ticks:{maxTicksLimit:6,color:'#8b949e',font:{size:10}},grid:{color:'rgba(139,148,158,0.08)'}},y:{ticks:{color:'#8b949e',font:{size:10},callback:v=>v.toFixed(1)+'%'},grid:{color:'rgba(139,148,158,0.08)'}}}}});
   }
 
@@ -1421,21 +2320,40 @@ document.addEventListener('click', e => {
 
   /* ── Performance chart ── */
   async function renderPerfChart() {
-    const snaps=filterByPeriod(getSnapshots(),perfPeriod);
-    const wrap=$('perfChartWrap'), ctx=$('perfChart');
-    if(!ctx) return;
-    if(perfChart){perfChart.destroy();perfChart=null;}
-    if(snaps.length<1){if(wrap) wrap.innerHTML='<div class="analytics-empty" style="height:320px;"><div class="emoji">📸</div><h4>First snapshot recorded!</h4><p>Come back tomorrow — the chart grows as you track your portfolio daily.</p></div>';return;}
-    const labels=snaps.map(s=>s.date);
-    const fv=snaps[0].value||1;
-    const portNorm=snaps.map(s=>parseFloat(((s.value/fv)*100).toFixed(3)));
+    const allSnaps = getSnapshots();
+    const snaps = filterByPeriod(allSnaps, perfPeriod);
+    const wrap = $('perfChartWrap');
+    if (!wrap) return;
+    if (perfChart) { perfChart.destroy(); perfChart = null; }
+
+    // Restore canvas if it was replaced by empty-state HTML
+    if (!$('perfChart')) {
+      wrap.innerHTML = '<canvas id="perfChart"></canvas>';
+    }
+    const ctx = $('perfChart');
+    if (!ctx) return;
+
+    if (allSnaps.length === 0) {
+      wrap.innerHTML = '<div class="analytics-empty" style="height:320px;"><div class="emoji">📸</div><h4>No snapshot yet</h4><p>Add funds or buy stocks, then open this tab to record your first snapshot.</p></div>';
+      return;
+    }
+
+    // Build labels: if only 1 snap, add today as second point so chart renders
+    let chartSnaps = snaps.length > 0 ? snaps : allSnaps;
+    if (chartSnaps.length === 1) {
+      chartSnaps = [chartSnaps[0], { date: new Date().toISOString().slice(0,10), value: chartSnaps[0].value }];
+    }
+
+    const labels = chartSnaps.map(s => s.date);
+    const fv = chartSnaps[0].value || 1;
+    const portNorm = chartSnaps.map(s => parseFloat(((s.value / fv) * 100).toFixed(3)));
     const niftyNorm  = await simOrFetch('^NSEI',  labels, 0.13, 0.007);
     const sensexNorm = await simOrFetch('^BSESN', labels, 0.12, 0.007);
-    const ds=[];
-    if(bmToggles.portfolio) ds.push({label:'My Portfolio',data:portNorm,borderColor:'#58a6ff',backgroundColor:'rgba(88,166,255,0.07)',fill:true,tension:0.35,pointRadius:snaps.length>60?0:3,borderWidth:2.5,borderDash:[]});
-    if(bmToggles.nifty)     ds.push({label:'NIFTY 50',data:niftyNorm,borderColor:'#3fb950',backgroundColor:'transparent',fill:false,tension:0.35,pointRadius:0,borderWidth:1.5,borderDash:[6,4]});
-    if(bmToggles.sensex)    ds.push({label:'SENSEX',data:sensexNorm,borderColor:'#d29922',backgroundColor:'transparent',fill:false,tension:0.35,pointRadius:0,borderWidth:1.5,borderDash:[3,4]});
-    perfChart=new Chart(ctx,{type:'line',data:{labels,datasets:ds},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>{const rel=c.parsed.y-100;return `${c.dataset.label}: ${c.parsed.y.toFixed(2)}  (${rel>=0?'+':''}${rel.toFixed(2)}%)`;},}}},scales:{x:{ticks:{maxTicksLimit:8,color:'#8b949e',font:{size:10}},grid:{color:'rgba(139,148,158,0.08)'}},y:{ticks:{color:'#8b949e',font:{size:10},callback:v=>v.toFixed(0)},grid:{color:'rgba(139,148,158,0.08)'}}}},});
+    const ds = [];
+    if (bmToggles.portfolio) ds.push({label:'My Portfolio',data:portNorm,borderColor:'#58a6ff',backgroundColor:'rgba(88,166,255,0.07)',fill:true,tension:0.35,pointRadius:chartSnaps.length>60?0:3,borderWidth:2.5,borderDash:[]});
+    if (bmToggles.nifty)     ds.push({label:'NIFTY 50',data:niftyNorm,borderColor:'#3fb950',backgroundColor:'transparent',fill:false,tension:0.35,pointRadius:0,borderWidth:1.5,borderDash:[6,4]});
+    if (bmToggles.sensex)    ds.push({label:'SENSEX',data:sensexNorm,borderColor:'#d29922',backgroundColor:'transparent',fill:false,tension:0.35,pointRadius:0,borderWidth:1.5,borderDash:[3,4]});
+    perfChart = new Chart(ctx, {type:'line',data:{labels,datasets:ds},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>{const rel=c.parsed.y-100;return `${c.dataset.label}: ${c.parsed.y.toFixed(2)}  (${rel>=0?'+':''}${rel.toFixed(2)}%)`;},}}},scales:{x:{ticks:{maxTicksLimit:8,color:'#8b949e',font:{size:10}},grid:{color:'rgba(139,148,158,0.08)'}},y:{ticks:{color:'#8b949e',font:{size:10},callback:v=>v.toFixed(0)},grid:{color:'rgba(139,148,158,0.08)'}}}}});
   }
 
   /* ── Benchmark table ── */
